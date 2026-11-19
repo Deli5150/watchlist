@@ -11,7 +11,7 @@ import { useWide } from '../lib/layout'
 import { ensureShow, itemId, MOVIE_STATUS_LABEL, refreshItemFields, STATUS_LABEL } from '../lib/library'
 import { duration, epLabel, formatDate, showProgress, watchIndex } from '../lib/progress'
 import { useStore } from '../lib/store'
-import { currentRegion, img, movieDetails, showDetails, trailerOf, yearOf, type CastMember, type MovieDetails, type Providers, type ShowDetails } from '../lib/tmdb'
+import { currentRegion, img, movieDetails, showDetails, trailerOf, yearOf, type CastMember, type MovieDetails, type Providers, type ShowDetails, type Video } from '../lib/tmdb'
 import type { LibraryItem, MediaType } from '../lib/types'
 import { useRootNav, type RootParams } from '../nav'
 import { chooseStatus, unwatchMovie, watchEpisode, watchMovie } from '../ui/actions'
@@ -20,6 +20,7 @@ import { Avatar, Carousel, Poster, ProgressBar, Score, SectionHeader } from '../
 import { PressableScale } from '../ui/motion'
 import { showSheet, closeSheet } from '../ui/overlays'
 import { colors } from '../ui/theme'
+import { playableVideos, playTrailer, youtubeThumb } from '../ui/Trailer'
 import { ErrorNote } from './Discover'
 import { openUrl } from './Settings'
 
@@ -111,6 +112,7 @@ function Body({ type, d, item }: { type: MediaType; d: Details; item: LibraryIte
         {d.genres.length > 0 && <Text style={{ color: colors.dim, fontSize: 13, marginBottom: 26 }}>{d.genres.map((g) => g.name).join(' · ')}</Text>}
 
         {show && <Seasons show={show} item={item} />}
+        <Videos title={title} videos={d.videos?.results} />
         <Cast cast={show ? show.aggregate_credits?.cast : movie?.credits?.cast} />
         {movie?.belongs_to_collection && <CollectionCard c={movie.belongs_to_collection} />}
         <Carousel title="More like this" items={(d.recommendations?.results ?? []).map((m) => ({ ...m, media_type: m.media_type ?? type }))} />
@@ -150,7 +152,7 @@ function Actions({ type, d, item, title }: { type: MediaType; d: Details; item: 
       )}
       {item && <IconButton icon={item.favorite ? 'heart' : 'heart-outline'} label="Favorite" on={item.favorite} onPress={() => updateItem(item.id, { favorite: !item.favorite })} />}
       {item && <IconButton icon={item.rating ? 'star' : 'star-outline'} label="Rate" on={item.rating > 0} onPress={() => rate(item, title)} />}
-      {trailer && <IconButton icon="play" label="Trailer" onPress={() => openUrl(`https://www.youtube.com/watch?v=${trailer.key}`)} />}
+      {trailer && <BigButton icon="play" label="Trailer" onPress={() => playTrailer(title, d.videos?.results ?? [], trailer)} />}
       <IconButton icon="share-outline" label="Share" onPress={() => void Share.share({ message: `${title} — https://www.themoviedb.org/${type}/${d.id}` })} />
     </View>
   )
@@ -335,6 +337,35 @@ function Seasons({ show, item }: { show: ShowDetails; item: LibraryItem | undefi
             </PressableScale>
           )
         })}
+      </ScrollView>
+    </View>
+  )
+}
+
+/** Trailers, teasers and clips (YouTube), played in the app. */
+function Videos({ title, videos }: { title: string; videos: Video[] | undefined }) {
+  const list = playableVideos(videos)
+  if (!list.length) return null
+  return (
+    <View style={{ marginBottom: 26 }}>
+      <SectionHeader title="Trailers & videos" />
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingBottom: 6 }}>
+        {list.slice(0, 16).map((v) => (
+          <PressableScale key={v.key} onPress={() => playTrailer(title, list, v)} style={{ width: 240 }}>
+            <View style={{ borderRadius: 12, overflow: 'hidden', borderWidth: 1, borderColor: colors.border, backgroundColor: colors.cardHi }}>
+              <Image source={{ uri: youtubeThumb(v.key) }} style={{ width: '100%', aspectRatio: 16 / 9 }} contentFit="cover" transition={150} />
+              <View style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
+                <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' }}>
+                  <Ionicons name="play" size={22} color="#fff" style={{ marginLeft: 3 }} />
+                </View>
+              </View>
+            </View>
+            <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600', marginTop: 7 }} numberOfLines={1}>
+              {v.name}
+            </Text>
+            <Text style={{ color: colors.dim, fontSize: 12, marginTop: 1 }}>{v.type}</Text>
+          </PressableScale>
+        ))}
       </ScrollView>
     </View>
   )

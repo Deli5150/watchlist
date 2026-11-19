@@ -28,6 +28,7 @@ import { Sidebar } from './src/ui/Sidebar'
 import { TabBar, TABS } from './src/ui/TabBar'
 import { applyTheme, colors, DEFAULT_THEME, THEMES } from './src/ui/theme'
 import { ToastHost } from './src/ui/toast'
+import { TrailerHost } from './src/ui/Trailer'
 import { UpdatePrompt, useUpdatePrompt } from './src/ui/UpdatePrompt'
 
 const Root = createNativeStackNavigator<RootParams>()
@@ -186,6 +187,7 @@ export default function App() {
       )}
       {loaded && <UpdatePrompt />}
       {loaded && <Alerts />}
+      <TrailerHost />
       <ToastHost />
       <OverlayHost />
     </SafeAreaProvider>

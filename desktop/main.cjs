@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, ipcMain, Menu, nativeImage, net, Notification, protocol, shell, Tray } = require('electron')
+const { app, BrowserWindow, dialog, ipcMain, Menu, nativeImage, net, Notification, protocol, session, shell, Tray } = require('electron')
 const fs = require('node:fs')
 const path = require('node:path')
 const { pathToFileURL } = require('node:url')
@@ -20,6 +20,17 @@ if (!app.requestSingleInstanceLock()) app.exit(0)
 
 let win = null
 let tray = null
+
+// Trailers play in YouTube's embed, which refuses to play without a Referer, and pages on app://
+// don't send one: give its requests the app's website instead.
+function allowYouTubeEmbeds() {
+  const urls = ['https://www.youtube-nocookie.com/*', 'https://www.youtube.com/*']
+  session.defaultSession.webRequest.onBeforeSendHeaders({ urls }, (details, callback) => {
+    const headers = details.requestHeaders
+    if (!headers.Referer || headers.Referer.startsWith('app://')) headers.Referer = 'https://deli5150.github.io/watchlist/'
+    callback({ requestHeaders: headers })
+  })
+}
 
 function serveWeb() {
   protocol.handle('app', (req) => {
@@ -237,6 +248,7 @@ app.on('window-all-closed', () => {})
 app.whenReady().then(() => {
   app.setAppUserModelId('app.watchlist.tracker')
   serveWeb()
+  allowYouTubeEmbeds()
   loadReminders()
   createWindow()
   createTray()
