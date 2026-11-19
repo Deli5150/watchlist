@@ -9,7 +9,8 @@ import { dateOf, img, titleOf, yearOf, type MediaSummary } from '../lib/tmdb'
 import type { MediaType } from '../lib/types'
 import { useRootNav } from '../nav'
 import { PressableScale } from './motion'
-import { colors } from './theme'
+import Svg, { Circle } from 'react-native-svg'
+import { colors, display, font } from './theme'
 
 // Posters, rows and grids of shows and movies.
 
@@ -72,7 +73,7 @@ export const MediaCard = memo(function MediaCard({ m, width, sub, onPress, foote
         <InLibraryMark id={itemId(type, m.id)} />
       </View>
       {footer}
-      <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600', marginTop: 7 }} numberOfLines={1}>
+      <Text style={[display(15.5), { marginTop: 7 }]} numberOfLines={1}>
         {titleOf(m)}
       </Text>
       <Text style={{ color: colors.dim, fontSize: 12, marginTop: 1 }} numberOfLines={1}>
@@ -81,6 +82,56 @@ export const MediaCard = memo(function MediaCard({ m, width, sub, onPress, foote
     </PressableScale>
   )
 })
+
+const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
+
+/** Out in the last two months (or coming): worth a NEW badge. */
+const isNew = (date: string | undefined): boolean => Boolean(date) && Date.now() - new Date(date!).getTime() < 60 * 86_400_000
+
+/** A wide card: the backdrop with a NEW badge, then the poster, title, date and stars (Discover). */
+export const BackdropCard = memo(function BackdropCard({ m, width = 300 }: { m: MediaSummary; width?: number }) {
+  const open = useOpenTitle()
+  const type = (m.media_type === 'movie' ? 'movie' : 'tv') as MediaType
+  const date = dateOf(m)
+  const backdrop = img(m.backdrop_path, 'w780')
+  return (
+    <PressableScale onPress={() => open(type, m.id)} style={{ width, backgroundColor: colors.card, borderRadius: 16, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
+      <View style={{ width: '100%', aspectRatio: 16 / 8, backgroundColor: colors.cardHi }}>
+        {backdrop && <Image source={{ uri: backdrop }} style={{ width: '100%', height: '100%' }} contentFit="cover" transition={150} />}
+        {isNew(date) && (
+          <View style={{ position: 'absolute', top: 10, left: 10, backgroundColor: '#e5484d', borderRadius: 11, paddingHorizontal: 9, height: 22, justifyContent: 'center' }}>
+            <Text style={{ color: '#fff', fontSize: 11, fontWeight: '900', letterSpacing: 0.6 }}>NEW</Text>
+          </View>
+        )}
+        <InLibraryMark id={itemId(type, m.id)} />
+      </View>
+      <View style={{ flexDirection: 'row', alignItems: 'center', padding: 12 }}>
+        <Poster path={m.poster_path} width={44} radius={6} />
+        <View style={{ flex: 1, marginLeft: 12 }}>
+          <Text style={display(17)} numberOfLines={1}>
+            {titleOf(m)}
+          </Text>
+          <Text style={{ color: colors.dim, fontSize: 12, fontWeight: '700', letterSpacing: 0.6, marginTop: 1 }}>{date ? `${MONTHS[Number(date.slice(5, 7)) - 1]}, ${date.slice(0, 4)}` : 'TBA'}</Text>
+          <View style={{ marginTop: 3 }}>
+            <Stars value={m.vote_average} size={12} />
+          </View>
+        </View>
+      </View>
+    </PressableScale>
+  )
+})
+
+/** A sideways row of backdrop cards. */
+export function BackdropRow({ items, width = 300 }: { items: MediaSummary[]; width?: number }) {
+  if (!items.length) return null
+  return (
+    <ScrollView horizontal showsHorizontalScrollIndicator={Platform.OS === 'web'} contentContainerStyle={{ gap: 12, paddingBottom: Platform.OS === 'web' ? 10 : 0 }} style={{ marginBottom: 22 }}>
+      {items.map((m) => (
+        <BackdropCard key={`${m.media_type}-${m.id}`} m={m} width={width} />
+      ))}
+    </ScrollView>
+  )
+}
 
 /** A titled, sideways-scrolling row of posters. */
 export function Carousel({ title, items, onSeeAll, width = 132, sub }: { title: string; items: MediaSummary[]; onSeeAll?: () => void; width?: number; sub?: (m: MediaSummary) => string | undefined }) {
@@ -97,10 +148,12 @@ export function Carousel({ title, items, onSeeAll, width = 132, sub }: { title: 
   )
 }
 
-export function SectionHeader({ title, onSeeAll, right }: { title: string; onSeeAll?: () => void; right?: ReactNode }) {
+/** A section's title: condensed capitals, with an optional coloured icon (Showline-style). */
+export function SectionHeader({ title, onSeeAll, right, icon, iconColor }: { title: string; onSeeAll?: () => void; right?: ReactNode; icon?: React.ComponentProps<typeof Ionicons>['name']; iconColor?: string }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-      <Text style={{ color: colors.text, fontSize: 20, fontWeight: '700', flex: 1 }}>{title}</Text>
+      {icon && <Ionicons name={icon} size={17} color={iconColor ?? colors.accent} style={{ marginRight: 8 }} />}
+      <Text style={[display(19), { flex: 1, textTransform: 'uppercase' }]}>{title}</Text>
       {right}
       {onSeeAll && (
         <Pressable onPress={onSeeAll} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -109,6 +162,96 @@ export function SectionHeader({ title, onSeeAll, right }: { title: string; onSee
         </Pressable>
       )}
     </View>
+  )
+}
+
+/** A big section heading with a round icon and a line under it ("Trending — What viewers are watching now."). */
+export function BigHeader({ title, sub, icon, color, onPress }: { title: string; sub: string; icon: React.ComponentProps<typeof Ionicons>['name']; color: string; onPress?: () => void }) {
+  return (
+    <Pressable onPress={onPress} disabled={!onPress} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16, marginTop: 6 }}>
+      <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: color, alignItems: 'center', justifyContent: 'center', marginRight: 14 }}>
+        <Ionicons name={icon} size={22} color="#111" />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={{ color: colors.text, fontSize: 22, fontWeight: '700' }}>{title}</Text>
+        <Text style={{ color: colors.dim, fontSize: 14, marginTop: 1 }}>{sub}</Text>
+      </View>
+      {onPress && <Ionicons name="chevron-forward" size={20} color={colors.dim} />}
+    </Pressable>
+  )
+}
+
+/** Small coloured capitals over a row ("TRENDING SHOWS"). */
+export function Eyebrow({ label, icon, color }: { label: string; icon?: React.ComponentProps<typeof Ionicons>['name']; color: string }) {
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+      {icon && <Ionicons name={icon} size={14} color={color} style={{ marginRight: 7 }} />}
+      <Text style={{ color, fontSize: 12.5, fontWeight: '800', letterSpacing: 1.2, textTransform: 'uppercase' }}>{label}</Text>
+    </View>
+  )
+}
+
+/** TMDB's 0–10 score as five stars (halves included). */
+export function Stars({ value, size = 14, showNumber = true }: { value: number | undefined; size?: number; showNumber?: boolean }) {
+  if (!value) return null
+  const five = Math.round(value) / 2
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+      {[1, 2, 3, 4, 5].map((n) => (
+        <Ionicons key={n} name={five >= n ? 'star' : five >= n - 0.5 ? 'star-half' : 'star-outline'} size={size} color={five >= n - 0.5 ? '#f5c518' : 'rgba(255,255,255,0.45)'} style={{ marginRight: 1 }} />
+      ))}
+      {showNumber && <Text style={{ color: colors.text, fontSize: size, fontWeight: '700', marginLeft: 5 }}>{five.toFixed(1)}</Text>}
+    </View>
+  )
+}
+
+/** The stars on a dark pill, over a backdrop. */
+export function StarPill({ value }: { value: number | undefined }) {
+  if (!value) return null
+  return (
+    <View style={{ alignSelf: 'center', flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(10,10,12,0.82)', borderRadius: 30, paddingHorizontal: 18, height: 52, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }}>
+      <Stars value={value} size={24} />
+    </View>
+  )
+}
+
+/** A ring that fills with progress, with a number (episodes left) in it. */
+export function ProgressRing({ value, label, size = 44, color = colors.accent, done }: { value: number; label?: string; size?: number; color?: string; done?: boolean }) {
+  const stroke = 4
+  const r = (size - stroke) / 2
+  const c = 2 * Math.PI * r
+  return (
+    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+      <Svg width={size} height={size} style={{ position: 'absolute', transform: [{ rotate: '-90deg' }] }}>
+        <Circle cx={size / 2} cy={size / 2} r={r} stroke="rgba(255,255,255,0.14)" strokeWidth={stroke} fill="none" />
+        <Circle cx={size / 2} cy={size / 2} r={r} stroke={color} strokeWidth={stroke} fill="none" strokeLinecap="round" strokeDasharray={`${c * Math.max(0, Math.min(1, value))} ${c}`} />
+      </Svg>
+      {done ? <Ionicons name="checkmark" size={size * 0.45} color={color} /> : <Text style={display(size * 0.4)}>{label}</Text>}
+    </View>
+  )
+}
+
+/** A rounded card row: picture on the left, text, something on the right (cast, credits, library lists). */
+export function CardRow({ image, imageKind = 'poster', title, titleExtra, sub, right, onPress, dim }: { image: string | null | undefined; imageKind?: 'poster' | 'avatar'; title: string; titleExtra?: string; sub?: string; right?: ReactNode; onPress?: () => void; dim?: boolean }) {
+  const uri = img(image, 'w185')
+  return (
+    <PressableScale onPress={onPress} disabled={!onPress} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.card, borderRadius: 12, borderWidth: 1, borderColor: colors.border, overflow: 'hidden', marginBottom: 8, opacity: dim ? 0.6 : 1 }}>
+      <View style={{ width: 62, height: 80, backgroundColor: colors.cardHi }}>
+        {uri ? <Image source={{ uri }} style={{ width: '100%', height: '100%' }} contentFit="cover" transition={150} /> : <Ionicons name={imageKind === 'avatar' ? 'person' : 'film-outline'} size={22} color={colors.faint} style={{ margin: 20 }} />}
+      </View>
+      <View style={{ flex: 1, paddingHorizontal: 14, paddingVertical: 8 }}>
+        <Text style={display(18)} numberOfLines={1}>
+          {title}
+          {titleExtra ? <Text style={{ fontFamily: font.displaySemi, color: colors.dim, fontSize: 15 }}>{`  ${titleExtra}`}</Text> : null}
+        </Text>
+        {sub ? (
+          <Text style={{ color: colors.dim, fontSize: 14, marginTop: 2 }} numberOfLines={1}>
+            {sub}
+          </Text>
+        ) : null}
+      </View>
+      <View style={{ paddingRight: 14 }}>{right ?? (onPress ? <Ionicons name="arrow-up-outline" size={18} color={colors.dim} style={{ transform: [{ rotate: '45deg' }] }} /> : null)}</View>
+    </PressableScale>
   )
 }
 

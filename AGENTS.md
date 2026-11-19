@@ -23,8 +23,16 @@ See README.md for features and build commands.
   `src/lib/updater.ts`. Phones use `src/ui/UpdatePrompt.tsx` (Apollo-style sheet).
 - Themes: `colors` in `src/ui/theme.ts` is one mutable object; App re-keys on theme change. Use
   `colors.*`; text on `colors.accent` uses `colors.onAccent`.
-- Layout: `useWide()` (web ≥860px) = sidebar; phones get the TabBar (5 tabs; History/Settings from
-  Up Next's header).
+- Look: a merge of Showline's design and WatchList's own (user's request, 2026-11-18): condensed
+  headings in Barlow Semi Condensed (`display()` in theme.ts, loaded in App.tsx), uppercase
+  `SectionHeader`s with icons, title pages = backdrop + logo + star pill, then a panel with Details |
+  Progress | Cast & Crew (Season.tsx is the Progress panel; there is no Season route). Keep the
+  Cinema accent, the episode-still Up Next cards and the desktop sidebar as WatchList's own.
+- Layout: `useWide()` (web ≥860px) = sidebar (Shows, Movies, Library, Calendar, Discover, Search,
+  History, Settings); phones get the floating TabBar (Shows, Movies, Library, Discover + a round
+  Search button); Calendar/History/Settings open from `ScreenTitle`'s buttons.
+- Library labels: shows planned = "Watch Later", movies planned = "Watchlist"; "Caught Up" is
+  computed (watching + every aired episode watched).
 
 ## Before finishing a change
 

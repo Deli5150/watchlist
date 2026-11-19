@@ -26,6 +26,8 @@ export function Sidebar({ onTab }: { onTab: (t: TabKey) => void }) {
         return (
           <Pressable
             key={t.key}
+            accessibilityRole="tab"
+            accessibilityLabel={t.label}
             onPress={() => onTab(t.key)}
             style={(state) => ({
               flexDirection: 'row',
@@ -44,7 +46,7 @@ export function Sidebar({ onTab }: { onTab: (t: TabKey) => void }) {
       })}
       <View style={{ flex: 1 }} />
       <View style={{ paddingHorizontal: 6 }}>
-        <Text style={{ color: colors.dim, fontSize: 13 }}>{`${shows} watching · ${movies} movies to watch`}</Text>
+        <Text style={{ color: colors.dim, fontSize: 13 }}>{`${shows} watching · ${movies} ${movies === 1 ? 'movie' : 'movies'} to watch`}</Text>
         {sync.enabled && (
           <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10 }}>
             <Ionicons name={sync.error ? 'cloud-offline-outline' : 'cloud-done-outline'} size={14} color={sync.error ? colors.danger : colors.dim} />

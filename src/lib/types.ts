@@ -54,6 +54,9 @@ export interface Settings {
   calendarView: 'list' | 'week' | 'month'
   /** Library: Shows or Movies. */
   libraryType: MediaType
+  /** Search: where to look, and your latest searches (this device only). */
+  searchScope: 'library' | 'discover'
+  recentSearches: string[]
   /** Ask before marking earlier episodes too. */
   markPrevious: 'ask' | 'always' | 'never'
   lastSeenVersion: string

@@ -7,7 +7,7 @@ export function useWide(): boolean {
   return Platform.OS === 'web' && width >= 860
 }
 
-export type TabKey = 'upnext' | 'library' | 'calendar' | 'discover' | 'search' | 'history' | 'settings'
+export type TabKey = 'shows' | 'movies' | 'library' | 'calendar' | 'discover' | 'search' | 'history' | 'settings'
 
 /** The selected main section (tab bar on phones, sidebar on desktop). */
-export const useTab = create<{ tab: TabKey; set: (t: TabKey) => void }>((set) => ({ tab: 'upnext', set: (tab) => set({ tab }) }))
+export const useTab = create<{ tab: TabKey; set: (t: TabKey) => void }>((set) => ({ tab: 'shows', set: (tab) => set({ tab }) }))

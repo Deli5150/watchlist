@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { ActivityIndicator, ScrollView, Text, useWindowDimensions, View } from 'react-native'
 import { useAsync } from '../lib/hooks'
-import { byGenre, genres, list, tmdbConfigured, type ListKind, type MediaSummary } from '../lib/tmdb'
+import { useStore } from '../lib/store'
+import { byGenre, genres, list, recommendedFor, tmdbConfigured, type ListKind, type MediaSummary } from '../lib/tmdb'
 import type { MediaType } from '../lib/types'
 import { useRootNav, type RootParams } from '../nav'
 import { EmptyNote, Header, Page, Pill, Segmented } from '../ui/kit'
-import { Carousel, Chip, MediaCard, PosterGrid, Still, useOpenTitle } from '../ui/media'
+import { BackdropRow, BigHeader, Carousel, Chip, Eyebrow, MediaCard, PosterGrid, SectionHeader, Still, useOpenTitle } from '../ui/media'
 import { PressableScale } from '../ui/motion'
-import { colors } from '../ui/theme'
+import { colors, display } from '../ui/theme'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 
 // Discover: what's trending, popular, airing and coming soon on TMDB, and genres to browse.
@@ -22,25 +23,69 @@ const ROWS: Array<{ title: string; list: ListKind }> = [
   { title: 'Top rated movies', list: 'top-movie' }
 ]
 
+// Section colours (Showline-style round icons), the same in every theme.
+const YELLOW = '#f5c84c'
+const TEAL = '#4fd1c5'
+const PINK = '#f06bb5'
+const VIOLET = '#a78bfa'
+
 export default function Discover() {
   const nav = useRootNav()
   const [genreType, setGenreType] = useState<MediaType>('tv')
+  const items = useStore((s) => s.items)
   const trending = useAsync(() => list('trending'), [])
+  const trendingTv = useAsync(() => list('trending-tv'), [])
+  const trendingMovies = useAsync(() => list('trending-movie'), [])
+  const antTv = useAsync(() => list('anticipated-tv'), [])
+  const antMovies = useAsync(() => list('anticipated-movie'), [])
+  // Recommendations from the titles you added or watched most recently.
+  const seedKey = [...items].sort((a, b) => b.statusAt - a.statusAt).slice(0, 8).map((i) => i.id).join()
+  const recs = useAsync(() => {
+    const seeds = [...items].sort((a, b) => b.statusAt - a.statusAt).slice(0, 8).map((i) => ({ type: i.type, id: i.tmdbId }))
+    return seeds.length ? recommendedFor(seeds, new Set(items.map((i) => i.id))) : Promise.resolve([])
+  }, [seedKey])
   const genreList = useAsync(() => genres(genreType), [genreType])
   if (!tmdbConfigured()) return <NoKey />
   const hero = trending.data?.results.filter((m) => m.backdrop_path).slice(0, 6) ?? []
+  const recShows = (recs.data ?? []).filter((m) => m.media_type === 'tv').slice(0, 16)
+  const recMovies = (recs.data ?? []).filter((m) => m.media_type === 'movie').slice(0, 16)
   return (
     <Page wide bottomSpace={110}>
-      <Text style={{ color: colors.text, fontSize: 34, fontWeight: '800', marginTop: 34, marginBottom: 18 }}>Discover</Text>
+      <Text style={[display(40), { marginTop: 30, marginBottom: 18 }]}>Discover</Text>
       {trending.error && !trending.data && <ErrorNote message={trending.error} onRetry={trending.reload} />}
       {hero.length > 0 && <Hero items={hero} />}
-      {trending.data && <Carousel title="Trending this week" items={trending.data.results.slice(6)} onSeeAll={() => nav.push('Browse', { title: 'Trending this week', list: 'trending' })} />}
+
+      {(recShows.length > 0 || recMovies.length > 0) && (
+        <>
+          <BigHeader title="Recommendations" sub="Based on your library." icon="star" color={YELLOW} />
+          {recShows.length > 0 && <Eyebrow label="Recommended shows" icon="tv-outline" color={YELLOW} />}
+          <BackdropRow items={recShows} />
+          {recMovies.length > 0 && <Eyebrow label="Recommended movies" icon="film-outline" color={YELLOW} />}
+          <BackdropRow items={recMovies} />
+        </>
+      )}
+
+      <BigHeader title="Trending" sub="What viewers are watching now." icon="flash" color={TEAL} onPress={() => nav.push('Browse', { title: 'Trending this week', list: 'trending' })} />
+      <Eyebrow label="Trending shows" icon="tv-outline" color={TEAL} />
+      <BackdropRow items={trendingTv.data?.results ?? []} />
+      <Eyebrow label="Trending movies" icon="film-outline" color={TEAL} />
+      <BackdropRow items={trendingMovies.data?.results ?? []} />
+
+      <BigHeader title="Most Anticipated" sub="What viewers can’t wait to watch." icon="flame" color={PINK} onPress={() => nav.push('Browse', { title: 'Most anticipated shows', list: 'anticipated-tv' })} />
+      <Eyebrow label="Anticipated shows" icon="tv-outline" color={PINK} />
+      <BackdropRow items={antTv.data?.results ?? []} />
+      <Eyebrow label="Anticipated movies" icon="film-outline" color={PINK} />
+      <BackdropRow items={antMovies.data?.results ?? []} />
+
+      <BigHeader title="Explore" sub="Popular, in theaters and top rated." icon="compass" color={VIOLET} />
       {ROWS.map((r) => (
         <ListRow key={r.list} {...r} onSeeAll={() => nav.push('Browse', { title: r.title, list: r.list })} />
       ))}
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-        <Text style={{ color: colors.text, fontSize: 20, fontWeight: '700', flex: 1 }}>Genres</Text>
-        <View style={{ width: 200 }}>
+        <View style={{ flex: 1 }}>
+          <SectionHeader title="Genres" />
+        </View>
+        <View style={{ width: 200, marginBottom: 12 }}>
           <Segmented<MediaType>
             value={genreType}
             onChange={setGenreType}

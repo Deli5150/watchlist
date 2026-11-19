@@ -40,6 +40,8 @@ export const DEFAULT_SETTINGS: Settings = {
   librarySort: 'recent',
   libraryType: 'tv',
   calendarView: 'list',
+  searchScope: 'discover',
+  recentSearches: [],
   markPrevious: 'ask',
   lastSeenVersion: '',
   skippedVersion: '',

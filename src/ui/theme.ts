@@ -58,8 +58,8 @@ function theme(name: string, bg: string, surface: string, accent: string, accent
 }
 
 export const THEMES: Record<string, Palette> = {
-  cinema: theme('Cinema', '#0a0a0c', '#1a1a1f', '#ff4d5e', '#ff8a95', '#8a1d2a'),
-  graphite: theme('Graphite', '#0c0c0d', '#1c1c1f', '#e6e6e9', '#ffffff', '#3a3a3f', '#111113'),
+  cinema: theme('Cinema', '#0e0e10', '#242428', '#ff4d5e', '#ff8a95', '#8a1d2a'),
+  graphite: theme('Graphite', '#101011', '#252527', '#e6e6e9', '#ffffff', '#3a3a3f', '#111113'),
   marquee: theme('Marquee', '#0c0a06', '#211d15', '#f5b83d', '#f8d88c', '#7a5c14', '#241a02'),
   violet: theme('Violet', '#09080e', '#1a1824', '#8b7cf6', '#a99cff', '#4a3aa8'),
   ocean: theme('Ocean', '#070a10', '#151b26', '#3d9bff', '#7cbcff', '#1d4f8f'),
@@ -77,11 +77,17 @@ export function applyTheme(id: string): void {
   Object.assign(colors, THEMES[id] ?? THEMES[DEFAULT_THEME])
 }
 
-export const radius = { card: 22, row: 18, pill: 999 }
+export const radius = { card: 24, row: 18, pill: 999 }
 
 export const font = {
-  family: Platform.select({ web: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif', default: undefined })
+  family: Platform.select({ web: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif', default: undefined }),
+  /** Condensed headings and titles (Barlow Semi Condensed, loaded in App.tsx). */
+  display: 'BarlowSemiCondensed_700Bold',
+  displaySemi: 'BarlowSemiCondensed_600SemiBold'
 }
+
+/** Headline text: condensed bold. */
+export const display = (size: number, color = colors.text) => ({ fontFamily: font.display, fontSize: size, color, letterSpacing: 0.1 }) as const
 
 /** Widest the content gets on a desktop window. */
 export const MAX_WIDTH = 1180

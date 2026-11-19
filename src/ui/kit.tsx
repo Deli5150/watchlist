@@ -152,8 +152,8 @@ export function Row({ label, sub, value, icon, iconColor, onPress, accessory, ri
     <Pressable onPress={onPress} disabled={!onPress} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', minHeight: 52, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: pressed ? colors.cardHi : 'transparent' })}>
       {left}
       {icon && (
-        <View style={{ width: 30, height: 30, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.08)', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
-          <Ionicons name={icon} size={17} color={iconColor ?? colors.text} />
+        <View style={{ width: 30, height: 30, borderRadius: 8, backgroundColor: '#f4f4f6', alignItems: 'center', justifyContent: 'center', marginRight: 14 }}>
+          <Ionicons name={icon} size={17} color={iconColor ?? '#111113'} />
         </View>
       )}
       <View style={{ flex: 1 }}>
@@ -183,6 +183,11 @@ export function Toggle({ value, onChange }: { value: boolean; onChange: (v: bool
       {...(Platform.OS === 'web' ? ({ activeThumbColor: '#fff' } as object) : {})}
     />
   )
+}
+
+/** A group's title above it, in plain grey (Settings). */
+export function GroupTitle({ children }: { children: ReactNode }) {
+  return <Text style={{ color: colors.dim, fontSize: 17, fontWeight: '600', marginBottom: 10, marginTop: 6, paddingHorizontal: 6 }}>{children}</Text>
 }
 
 export function SectionLabel({ children, right, style }: { children: ReactNode; right?: ReactNode; style?: TextStyle }) {

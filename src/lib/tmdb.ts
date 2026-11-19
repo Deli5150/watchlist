@@ -1,3 +1,4 @@
+import { addDays, today } from './dates'
 import { cacheGet, cacheSet } from './storage'
 
 // The Movie Database (TMDB): every show, movie, season, person and picture in WatchList comes from
@@ -240,7 +241,22 @@ export interface ShowBasics {
   homepage: string
 }
 
+export interface Logo {
+  file_path: string
+  iso_639_1: string | null
+  aspect_ratio: number
+}
+
+export interface Company {
+  id: number
+  name: string
+  logo_path: string | null
+}
+
 export interface ShowDetails extends ShowBasics {
+  images?: { logos: Logo[] }
+  keywords?: { results: Genre[] }
+  production_companies?: Company[]
   aggregate_credits?: { cast: CastMember[]; crew: CrewMember[] }
   'watch/providers'?: { results: Record<string, Providers> }
   external_ids?: { imdb_id?: string | null; tvdb_id?: number | null }
@@ -268,6 +284,9 @@ export interface MovieDetails {
   homepage: string
   imdb_id?: string | null
   belongs_to_collection: { id: number; name: string; poster_path: string | null; backdrop_path: string | null } | null
+  production_companies?: Company[]
+  images?: { logos: Logo[] }
+  keywords?: { keywords: Genre[] }
   credits?: { cast: CastMember[]; crew: CrewMember[] }
   'watch/providers'?: { results: Record<string, Providers> }
   recommendations?: Paged<MediaSummary>
@@ -294,6 +313,7 @@ export interface PersonDetails {
   place_of_birth: string | null
   profile_path: string | null
   known_for_department: string
+  gender?: number
   combined_credits?: { cast: MediaSummary[]; crew: MediaSummary[] }
   external_ids?: { imdb_id?: string | null; instagram_id?: string | null }
 }
@@ -314,10 +334,38 @@ export const showBasics = (id: number, ttl = 6 * HOUR) => tmdb<ShowBasics>(`/tv/
 
 /** Everything the show page shows. */
 export const showDetails = (id: number) =>
-  tmdb<ShowDetails>(`/tv/${id}`, { append_to_response: 'aggregate_credits,watch/providers,external_ids,recommendations,content_ratings,videos', include_video_language: `${language.split('-')[0]},en,null` })
+  tmdb<ShowDetails>(`/tv/${id}`, {
+    append_to_response: 'aggregate_credits,watch/providers,external_ids,recommendations,content_ratings,videos,images,keywords',
+    include_video_language: `${language.split('-')[0]},en,null`,
+    include_image_language: `${language.split('-')[0]},en,null`
+  })
 
 export const movieDetails = (id: number) =>
-  tmdb<MovieDetails>(`/movie/${id}`, { append_to_response: 'credits,watch/providers,recommendations,release_dates,videos', include_video_language: `${language.split('-')[0]},en,null` })
+  tmdb<MovieDetails>(`/movie/${id}`, {
+    append_to_response: 'credits,watch/providers,recommendations,release_dates,videos,images,keywords',
+    include_video_language: `${language.split('-')[0]},en,null`,
+    include_image_language: `${language.split('-')[0]},en,null`
+  })
+
+/** A movie's basics (runtime, release date), for library cards. */
+export interface MovieBasics {
+  id: number
+  title: string
+  runtime: number | null
+  release_date: string | null
+  poster_path: string | null
+  backdrop_path: string | null
+  vote_average: number
+  status: string
+}
+export const movieBasics = (id: number) => tmdb<MovieBasics>(`/movie/${id}`, {}, 24 * HOUR)
+
+/** The title logo in the app's language (else English, else any). */
+export function logoOf(images: { logos: Logo[] } | undefined): Logo | undefined {
+  const logos = images?.logos ?? []
+  const lang = language.split('-')[0]
+  return logos.find((l) => l.iso_639_1 === lang) ?? logos.find((l) => l.iso_639_1 === 'en') ?? logos[0]
+}
 
 export const season = (tvId: number, n: number, ttl = 12 * HOUR) => tmdb<SeasonDetails>(`/tv/${tvId}/season/${n}`, {}, ttl)
 
@@ -353,8 +401,10 @@ export type ListKind =
   | 'on-the-air'
   | 'upcoming-movie'
   | 'now-playing'
+  | 'anticipated-tv'
+  | 'anticipated-movie'
 
-const LIST_PATHS: Record<ListKind, { path: string; type?: 'tv' | 'movie'; regional?: boolean }> = {
+const LIST_PATHS: Record<Exclude<ListKind, 'anticipated-tv' | 'anticipated-movie'>, { path: string; type?: 'tv' | 'movie'; regional?: boolean }> = {
   trending: { path: '/trending/all/week' },
   'trending-tv': { path: '/trending/tv/week', type: 'tv' },
   'trending-movie': { path: '/trending/movie/week', type: 'movie' },
@@ -370,7 +420,8 @@ const LIST_PATHS: Record<ListKind, { path: string; type?: 'tv' | 'movie'; region
 
 /** One of TMDB's lists, each result tagged with its media type. */
 export async function list(kind: ListKind, page = 1): Promise<Paged<MediaSummary>> {
-  const { path, type, regional } = LIST_PATHS[kind]
+  if (kind === 'anticipated-tv' || kind === 'anticipated-movie') return anticipated(kind === 'anticipated-tv' ? 'tv' : 'movie', page)
+  const { path, type, regional } = LIST_PATHS[kind as Exclude<ListKind, 'anticipated-tv' | 'anticipated-movie'>]
   const res = await tmdb<Paged<MediaSummary>>(path, { page, ...(regional ? { region } : {}) }, 6 * HOUR)
   return { ...res, results: res.results.filter((r) => r.media_type !== 'person').map((r) => ({ ...r, media_type: r.media_type ?? type })) }
 }
@@ -379,6 +430,32 @@ export async function list(kind: ListKind, page = 1): Promise<Paged<MediaSummary
 export async function byGenre(type: 'tv' | 'movie', genreId: number, page = 1): Promise<Paged<MediaSummary>> {
   const res = await tmdb<Paged<MediaSummary>>(`/discover/${type}`, { with_genres: genreId, sort_by: 'popularity.desc', page, 'vote_count.gte': 50 }, 12 * HOUR)
   return { ...res, results: res.results.map((r) => ({ ...r, media_type: type })) }
+}
+
+/** The most popular shows and movies that aren't out yet. */
+async function anticipated(type: 'tv' | 'movie', page = 1): Promise<Paged<MediaSummary>> {
+  const tomorrow = addDays(today(), 1)
+  const res = await tmdb<Paged<MediaSummary>>(
+    `/discover/${type}`,
+    { page, sort_by: 'popularity.desc', [type === 'tv' ? 'first_air_date.gte' : 'primary_release_date.gte']: tomorrow, ...(type === 'movie' ? { region } : {}) },
+    12 * HOUR
+  )
+  return { ...res, results: res.results.map((r) => ({ ...r, media_type: type })) }
+}
+
+/** Titles like the ones you've added: TMDB's recommendations for them, most recommended first. */
+export async function recommendedFor(seeds: Array<{ type: 'tv' | 'movie'; id: number }>, exclude: Set<string>): Promise<MediaSummary[]> {
+  const counts = new Map<string, { m: MediaSummary; n: number }>()
+  const lists = await Promise.all(seeds.map((s) => tmdb<Paged<MediaSummary>>(`/${s.type}/${s.id}/recommendations`, {}, 24 * HOUR).then((r) => r.results.map((m) => ({ ...m, media_type: s.type }))).catch(() => [])))
+  for (const list of lists) {
+    for (const m of list) {
+      const k = `${m.media_type}:${m.id}`
+      if (exclude.has(k)) continue
+      const had = counts.get(k)
+      counts.set(k, { m, n: (had?.n ?? 0) + 1 })
+    }
+  }
+  return [...counts.values()].sort((a, b) => b.n - a.n || (b.m.popularity ?? 0) - (a.m.popularity ?? 0)).map((x) => x.m)
 }
 
 export const genres = (type: 'tv' | 'movie') => tmdb<{ genres: Genre[] }>(`/genre/${type}/list`, {}, 7 * 24 * HOUR)

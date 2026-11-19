@@ -1,5 +1,6 @@
 import { DarkTheme, NavigationContainer, StackActions, createNavigationContainerRef, type NavigationState } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
+import { BarlowSemiCondensed_600SemiBold, BarlowSemiCondensed_700Bold, useFonts } from '@expo-google-fonts/barlow-semi-condensed'
 import { StatusBar } from 'expo-status-bar'
 import { memo, useEffect, useRef } from 'react'
 import { ActivityIndicator, Animated, AppState, Easing, Platform, View } from 'react-native'
@@ -15,14 +16,15 @@ import type { RootParams } from './src/nav'
 import Calendar from './src/screens/Calendar'
 import Discover, { Browse } from './src/screens/Discover'
 import History from './src/screens/History'
-import Library from './src/screens/Library'
+import Library, { LibraryList } from './src/screens/Library'
+import Movies from './src/screens/Movies'
+import Shows from './src/screens/Shows'
 import { AboutScreen, AppearanceScreen, DataScreen, FeedbackScreen, LanguageScreen, RegionScreen, SyncScreen, UpdatesScreen, WhatsNew } from './src/screens/more'
 import Person, { Collection } from './src/screens/Person'
 import Search from './src/screens/Search'
-import Season, { Scorecard } from './src/screens/Season'
+import { Scorecard } from './src/screens/Season'
 import Settings from './src/screens/Settings'
 import Title from './src/screens/Title'
-import UpNext from './src/screens/UpNext'
 import { OverlayHost } from './src/ui/overlays'
 import { Sidebar } from './src/ui/Sidebar'
 import { TabBar, TABS } from './src/ui/TabBar'
@@ -44,7 +46,8 @@ if (__DEV__ && typeof globalThis !== 'undefined') {
 
 // Memoized: switching tabs re-renders the tab bar, not the screens.
 const SCREENS: Record<TabKey, React.ComponentType<{ active?: boolean }>> = {
-  upnext: memo(UpNext),
+  shows: memo(Shows),
+  movies: memo(Movies),
   library: memo(Library),
   calendar: memo(Calendar),
   discover: memo(Discover),
@@ -115,7 +118,10 @@ function Alerts() {
 }
 
 export default function App() {
-  const loaded = useStore((s) => s.loaded)
+  const storeLoaded = useStore((s) => s.loaded)
+  // The condensed headline font; carry on without it if it can't load.
+  const [fontsLoaded, fontError] = useFonts({ BarlowSemiCondensed_600SemiBold, BarlowSemiCondensed_700Bold })
+  const loaded = storeLoaded && (fontsLoaded || Boolean(fontError))
   const themeId = useStore((s) => s.settings.theme)
   const checkUpdates = useStore((s) => s.settings.checkUpdates)
   const wide = useWide()
@@ -167,7 +173,7 @@ export default function App() {
             <Root.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg }, animation: wide ? 'fade' : undefined }}>
               <Root.Screen name="Tabs" component={Tabs} />
               <Root.Screen name="Title" component={Title} />
-              <Root.Screen name="Season" component={Season} />
+              <Root.Screen name="LibraryList" component={LibraryList} />
               <Root.Screen name="Scorecard" component={Scorecard} />
               <Root.Screen name="Person" component={Person} />
               <Root.Screen name="Collection" component={Collection} />

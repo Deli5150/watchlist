@@ -1,23 +1,166 @@
 import { Ionicons } from '@expo/vector-icons'
+import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { memo, useMemo, useState } from 'react'
-import { Pressable, ScrollView, Text, View } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
 import { useShallow } from 'zustand/react/shallow'
-import { MOVIE_STATUS_LABEL, STATUS_LABEL, useShows } from '../lib/library'
-import { showProgress, watchIndex } from '../lib/progress'
+import { useWide } from '../lib/layout'
+import { STATUS_LABEL, MOVIE_STATUS_LABEL, useShows } from '../lib/library'
+import { showProgress, watchIndex, type Progress } from '../lib/progress'
 import { useStore } from '../lib/store'
-import type { LibraryItem, LibrarySort, MediaType, Status } from '../lib/types'
-import { EmptyNote, Page, SearchField, Segmented } from '../ui/kit'
-import { Chip, Poster, PosterGrid, ProgressBar, useOpenTitle } from '../ui/media'
+import type { LibraryItem, LibrarySort, MediaType } from '../lib/types'
+import { useRootNav, type LibraryFilter, type RootParams } from '../nav'
+import { EmptyNote, Header, Page, SearchField } from '../ui/kit'
+import { Poster, ProgressRing } from '../ui/media'
 import { PressableScale } from '../ui/motion'
 import { showMenu } from '../ui/overlays'
-import { colors } from '../ui/theme'
+import { colors, display } from '../ui/theme'
+import { ScreenTitle } from './Shows'
 
-// Library: every show or movie you've added, by status.
+// Library: your shows and movies at a glance (counts and a stack of posters), and a list for each
+// status. Caught Up is worked out: shows you're watching with every aired episode watched.
 
-type Filter = 'all' | Status | 'favorites'
+type IconName = React.ComponentProps<typeof Ionicons>['name']
 
-const SHOW_FILTERS: Filter[] = ['all', 'watching', 'planned', 'completed', 'paused', 'dropped', 'favorites']
-const MOVIE_FILTERS: Filter[] = ['all', 'planned', 'completed', 'favorites']
+const ROWS: Record<MediaType, Array<{ filter: LibraryFilter; label: string; sub: string; icon: IconName; color: string }>> = {
+  tv: [
+    { filter: 'watching', label: 'Watching', sub: 'In your Up Next', icon: 'play', color: 'accent' },
+    { filter: 'planned', label: 'Watch Later', sub: 'Set aside for another time', icon: 'time', color: '#d9a441' },
+    { filter: 'caughtup', label: 'Caught Up', sub: 'Waiting on new episodes', icon: 'hourglass', color: '#8b8b95' },
+    { filter: 'completed', label: 'Finished', sub: 'Shows you finished that have ended', icon: 'checkmark', color: '#8b8b95' },
+    { filter: 'paused', label: 'Paused', sub: 'On hold for now', icon: 'pause', color: '#6f7ad8' },
+    { filter: 'dropped', label: 'Dropped', sub: 'Stopped watching', icon: 'close', color: '#6b6b73' },
+    { filter: 'favorites', label: 'Favorites', sub: 'Shows you love', icon: 'heart', color: '#f06bb5' }
+  ],
+  movie: [
+    { filter: 'planned', label: 'Watchlist', sub: 'Movies you want to see', icon: 'bookmark', color: 'accent' },
+    { filter: 'completed', label: 'Watched', sub: 'Movies you’ve seen', icon: 'checkmark', color: '#8b8b95' },
+    { filter: 'favorites', label: 'Favorites', sub: 'Movies you love', icon: 'heart', color: '#f06bb5' }
+  ]
+}
+
+/** Library items that belong to a list. */
+function matches(i: LibraryItem, filter: LibraryFilter, p: Progress | null): boolean {
+  if (filter === 'all') return true
+  if (filter === 'favorites') return i.favorite
+  if (filter === 'caughtup') return i.status === 'watching' && Boolean(p?.caughtUp)
+  return i.status === filter
+}
+
+export default function Library() {
+  const { items, watches } = useStore(useShallow((s) => ({ items: s.items, watches: s.watches })))
+  const shows = useShows()
+  const wide = useWide()
+  const stats = useMemo(() => {
+    const idx = watchIndex(watches)
+    const progress = new Map<string, Progress>()
+    let available = 0
+    for (const i of items) {
+      if (i.type !== 'tv' || !shows[i.tmdbId]) continue
+      const p = showProgress(shows[i.tmdbId], i, idx.episodes.get(i.id))
+      progress.set(i.id, p)
+      available += p.total
+    }
+    const count = (type: MediaType, f: LibraryFilter) => items.filter((i) => i.type === type && matches(i, f, progress.get(i.id) ?? null)).length
+    return {
+      progress,
+      available,
+      episodes: watches.filter((w) => w.season !== null).length,
+      moviesWatched: idx.movies.size,
+      count
+    }
+  }, [items, watches, shows])
+  const tv = items.filter((i) => i.type === 'tv')
+  const movies = items.filter((i) => i.type === 'movie')
+  const cards = (
+    <>
+      <HubCard
+        type="tv"
+        title="Shows"
+        posters={tv.slice(-4).map((i) => i.poster)}
+        stats={[
+          ['Shows', tv.length],
+          ['Episodes available', stats.available],
+          ['Episodes watched', stats.episodes]
+        ]}
+        count={(f) => stats.count('tv', f)}
+      />
+      <HubCard
+        type="movie"
+        title="Movies"
+        posters={movies.slice(-4).map((i) => i.poster)}
+        stats={[
+          ['Movies', movies.length],
+          ['Watched', stats.moviesWatched],
+          ['On your watchlist', stats.count('movie', 'planned')]
+        ]}
+        count={(f) => stats.count('movie', f)}
+      />
+    </>
+  )
+  return (
+    <Page wide bottomSpace={120}>
+      <ScreenTitle title="Library" />
+      {wide ? <View style={{ flexDirection: 'row', gap: 18, alignItems: 'flex-start' }}>{cards}</View> : cards}
+    </Page>
+  )
+}
+
+function HubCard({ type, title, posters, stats, count }: { type: MediaType; title: string; posters: Array<string | null>; stats: Array<[string, number]>; count: (f: LibraryFilter) => number }) {
+  const nav = useRootNav()
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.card, borderRadius: 28, borderWidth: 1, borderColor: colors.border, padding: 18, marginBottom: 18 }}>
+      <Text style={{ color: colors.text, fontSize: 24, fontWeight: '700', marginBottom: 14 }}>{title}</Text>
+      <View style={{ backgroundColor: colors.cardHi, borderRadius: 18, padding: 16, flexDirection: 'row', marginBottom: 8, overflow: 'hidden' }}>
+        <View style={{ flex: 1 }}>
+          {stats.map(([label, n], i) => (
+            <View key={label} style={{ paddingVertical: 8, borderTopWidth: i ? 1 : 0, borderColor: colors.separator }}>
+              <Text style={{ color: colors.dim, fontSize: 12, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase' }}>{label}</Text>
+              <Text style={{ color: colors.text, fontSize: 24, fontWeight: '800' }}>{n.toLocaleString()}</Text>
+            </View>
+          ))}
+        </View>
+        <PosterStack posters={posters.filter(Boolean) as string[]} />
+      </View>
+      {ROWS[type].map((r) => {
+        // "accent" follows the theme.
+        const tint = r.color === 'accent' ? colors.accent : r.color
+        return (
+        <Pressable
+          key={r.filter}
+          onPress={() => nav.push('LibraryList', { type, filter: r.filter })}
+          style={(state) => ({ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 4, borderRadius: 12, backgroundColor: (state as { hovered?: boolean }).hovered || state.pressed ? 'rgba(255,255,255,0.04)' : 'transparent' })}
+        >
+          <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: `${tint}33`, alignItems: 'center', justifyContent: 'center', marginRight: 14 }}>
+            <Ionicons name={r.icon} size={20} color={tint} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: colors.text, fontSize: 17, fontWeight: '600' }}>{r.label}</Text>
+            <Text style={{ color: colors.dim, fontSize: 13.5, marginTop: 1 }}>{r.sub}</Text>
+          </View>
+          <Text style={{ color: colors.dim, fontSize: 17, marginRight: 6 }}>{count(r.filter)}</Text>
+          <Ionicons name="chevron-forward" size={16} color={colors.dim} />
+        </Pressable>
+        )
+      })}
+    </View>
+  )
+}
+
+/** A fanned stack of the latest posters. */
+function PosterStack({ posters }: { posters: string[] }) {
+  if (!posters.length) return null
+  return (
+    <View style={{ width: 130, height: 150, alignItems: 'center', justifyContent: 'center' }}>
+      {posters.slice(0, 4).map((p, i, all) => (
+        <View key={`${p}${i}`} style={{ position: 'absolute', transform: [{ rotate: `${(all.length - 1 - i) * 5 - 4}deg` }, { translateX: (all.length - 1 - i) * 8 }], shadowColor: '#000', shadowOpacity: 0.5, shadowRadius: 8 }}>
+          <Poster path={p} width={88} radius={9} />
+        </View>
+      ))}
+    </View>
+  )
+}
+
+// ── A list ──────────────────────────────────────────────────────────────────────────────────────
 
 const SORTS: Array<{ value: LibrarySort; label: string }> = [
   { value: 'recent', label: 'Recently watched' },
@@ -27,21 +170,22 @@ const SORTS: Array<{ value: LibrarySort; label: string }> = [
   { value: 'year', label: 'Release year' }
 ]
 
-export default function Library() {
-  const { items, watches, type, sort, setSettings } = useStore(
-    useShallow((s) => ({ items: s.items, watches: s.watches, type: s.settings.libraryType, sort: s.settings.librarySort, setSettings: s.setSettings }))
-  )
-  const [filter, setFilter] = useState<Filter>('all')
+const short = (ms: number): string => {
+  const d = new Date(ms)
+  return `${d.getMonth() + 1}/${d.getDate()}/${String(d.getFullYear()).slice(2)}`
+}
+
+export function LibraryList({ route }: NativeStackScreenProps<RootParams, 'LibraryList'>) {
+  const { type, filter } = route.params
+  const { items, watches, sort, setSettings } = useStore(useShallow((s) => ({ items: s.items, watches: s.watches, sort: s.settings.librarySort, setSettings: s.setSettings })))
+  const shows = useShows()
   const [query, setQuery] = useState('')
-  const labels = type === 'movie' ? MOVIE_STATUS_LABEL : STATUS_LABEL
-  const filters = type === 'movie' ? MOVIE_FILTERS : SHOW_FILTERS
+  const row = ROWS[type].find((r) => r.filter === filter)
+  const title = row?.label ?? (type === 'movie' ? MOVIE_STATUS_LABEL : STATUS_LABEL)[filter as 'watching'] ?? 'Library'
 
   const list = useMemo(() => {
     const idx = watchIndex(watches)
     const q = query.trim().toLowerCase()
-    const out = items.filter(
-      (i) => i.type === type && (filter === 'all' || (filter === 'favorites' ? i.favorite : i.status === filter)) && (!q || i.title.toLowerCase().includes(q))
-    )
     const last = (i: LibraryItem) => idx.last.get(i.id) ?? i.statusAt
     const by: Record<LibrarySort, (a: LibraryItem, b: LibraryItem) => number> = {
       recent: (a, b) => last(b) - last(a),
@@ -50,89 +194,66 @@ export default function Library() {
       rating: (a, b) => b.rating - a.rating || a.title.localeCompare(b.title),
       year: (a, b) => (b.year || '0').localeCompare(a.year || '0')
     }
-    return out.sort(by[sort])
-  }, [items, watches, type, filter, query, sort])
-
-  const counts = useMemo(() => {
-    const c: Record<string, number> = { all: 0, favorites: 0 }
-    for (const i of items) {
-      if (i.type !== type) continue
-      c.all++
-      c[i.status] = (c[i.status] ?? 0) + 1
-      if (i.favorite) c.favorites++
-    }
-    return c
-  }, [items, type])
+    return items
+      .filter((i) => i.type === type)
+      .map((i) => ({ i, p: i.type === 'tv' && shows[i.tmdbId] ? showProgress(shows[i.tmdbId], i, idx.episodes.get(i.id)) : null, last: idx.last.get(i.id) }))
+      .filter(({ i, p }) => matches(i, filter, p) && (!q || i.title.toLowerCase().includes(q)))
+      .sort((a, b) => by[sort](a.i, b.i))
+  }, [items, watches, shows, type, filter, query, sort])
 
   return (
-    <Page wide bottomSpace={110}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 34, marginBottom: 16 }}>
-        <Text style={{ color: colors.text, fontSize: 34, fontWeight: '800', flex: 1 }}>Library</Text>
-        <Pressable
-          onPress={() => showMenu('Sort by', SORTS.map((s) => ({ label: s.label, selected: s.value === sort, onPress: () => setSettings({ librarySort: s.value }) })))}
-          hitSlop={8}
-          style={{ flexDirection: 'row', alignItems: 'center', padding: 6 }}
-        >
-          <Ionicons name="swap-vertical" size={18} color={colors.accentHi} />
-          <Text style={{ color: colors.accentHi, fontWeight: '600', marginLeft: 4 }}>{SORTS.find((s) => s.value === sort)?.label}</Text>
-        </Pressable>
-      </View>
-      <View style={{ maxWidth: 360, marginBottom: 14 }}>
-        <Segmented<MediaType>
-          value={type}
-          onChange={(libraryType) => {
-            setSettings({ libraryType })
-            setFilter('all')
-          }}
-          options={[
-            { label: 'Shows', value: 'tv' },
-            { label: 'Movies', value: 'movie' }
-          ]}
+    <Page
+      header={
+        <Header
+          title={title}
+          right={
+            <Pressable
+              accessibilityLabel="Sort"
+              onPress={() => showMenu('Sort by', SORTS.map((s) => ({ label: s.label, selected: s.value === sort, onPress: () => setSettings({ librarySort: s.value }) })))}
+              style={({ pressed }) => ({ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.1)', borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.6 : 1 })}
+            >
+              <Ionicons name="filter" size={18} color={colors.text} />
+            </Pressable>
+          }
         />
+      }
+    >
+      <View style={{ flexDirection: 'row', marginBottom: 10, paddingHorizontal: 4 }}>
+        <Text style={{ color: colors.text, fontSize: 13, fontWeight: '800', letterSpacing: 1, flex: 1 }}>{title.toUpperCase()}</Text>
+        <Text style={{ color: colors.dim, fontSize: 13, fontWeight: '700', letterSpacing: 1 }}>{SORTS.find((s) => s.value === sort)?.label.toUpperCase()}</Text>
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }} style={{ marginBottom: 12 }}>
-        {filters.map((f) => (
-          <Chip key={f} on={f === filter} onPress={() => setFilter(f)} label={`${f === 'all' ? 'All' : f === 'favorites' ? 'Favorites' : labels[f]}${counts[f] ? `  ${counts[f]}` : ''}`} />
-        ))}
-      </ScrollView>
-      {counts.all > 8 && <SearchField value={query} onChange={setQuery} placeholder={`Filter your ${type === 'movie' ? 'movies' : 'shows'}`} style={{ marginBottom: 16, maxWidth: 420 }} />}
+      {items.filter((i) => i.type === type).length > 10 && <SearchField value={query} onChange={setQuery} placeholder={`Filter ${title.toLowerCase()}`} style={{ marginBottom: 12 }} />}
       {list.length ? (
-        <PosterGrid items={list} keyOf={(i) => i.id} render={(i, w) => <LibraryCard item={i} width={w} />} />
+        <View style={{ backgroundColor: colors.card, borderRadius: 22, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 14 }}>
+          {list.map(({ i, p, last }, n) => (
+            <ListRow key={i.id} item={i} p={p} last={last} first={n === 0} showInfo={shows[i.tmdbId]} />
+          ))}
+        </View>
       ) : (
-        <EmptyNote>{counts.all ? 'Nothing here.' : type === 'movie' ? 'Movies you add show up here.' : 'Shows you add show up here.'}</EmptyNote>
+        <EmptyNote>Nothing here yet.</EmptyNote>
       )}
     </Page>
   )
 }
 
-/** A poster in the library, with the show's progress under it. */
-const LibraryCard = memo(function LibraryCard({ item, width }: { item: LibraryItem; width: number }) {
-  const open = useOpenTitle()
-  const show = useShows((s) => (item.type === 'tv' ? s[item.tmdbId] : undefined))
-  const watched = useStore((s) => (item.type === 'tv' ? watchIndex(s.watches).episodes.get(item.id) : undefined))
-  const p = show ? showProgress(show, item, watched) : null
+const ListRow = memo(function ListRow({ item, p, last, first, showInfo }: { item: LibraryItem; p: Progress | null; last: number | undefined; first: boolean; showInfo: { number_of_seasons: number; number_of_episodes: number } | undefined }) {
+  const nav = useRootNav()
+  const done = item.status === 'completed' || (item.type === 'movie' && Boolean(last))
+  const sub = done && last ? `Last watched ${short(last)}` : item.type === 'tv' && showInfo ? `${showInfo.number_of_seasons} ${showInfo.number_of_seasons === 1 ? 'SEASON' : 'SEASONS'}  •  ${showInfo.number_of_episodes.toLocaleString()} EPISODES` : item.year
   return (
-    <PressableScale onPress={() => open(item.type, item.tmdbId)}>
-      <View>
-        <Poster path={item.poster} title={item.title} width={width} />
-        {item.favorite && (
-          <View style={{ position: 'absolute', top: 6, right: 6 }}>
-            <Ionicons name="heart" size={18} color={colors.accent} />
-          </View>
-        )}
-        {item.type === 'movie' && item.status === 'completed' && (
-          <View style={{ position: 'absolute', top: 6, left: 6, width: 22, height: 22, borderRadius: 11, backgroundColor: colors.success, alignItems: 'center', justifyContent: 'center' }}>
-            <Ionicons name="checkmark" size={13} color="#06210f" />
-          </View>
-        )}
+    <PressableScale onPress={() => nav.push('Title', { type: item.type, id: item.tmdbId })} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderTopWidth: first ? 0 : 1, borderColor: colors.separator }}>
+      <Poster path={item.poster} width={44} radius={6} />
+      <View style={{ flex: 1, marginLeft: 14 }}>
+        <Text style={display(20)} numberOfLines={1}>
+          {item.title}
+        </Text>
+        <Text style={{ color: colors.dim, fontSize: done ? 14 : 12.5, fontWeight: done ? '500' : '700', letterSpacing: done ? 0 : 0.6, marginTop: 1 }}>{sub}</Text>
       </View>
-      {p && p.total > 0 && <ProgressBar value={p.watched / p.total} style={{ marginTop: 7 }} />}
-      <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600', marginTop: 7 }} numberOfLines={1}>
-        {item.title}
-      </Text>
-      <Text style={{ color: colors.dim, fontSize: 12, marginTop: 1 }} numberOfLines={1}>
-        {p && p.total ? `${p.watched}/${p.total} episodes` : item.year}
-      </Text>
+      {done ? (
+        <ProgressRing value={1} done size={46} />
+      ) : p ? (
+        <ProgressRing value={p.total ? p.watched / p.total : 0} label={String(p.caughtUp ? 0 : p.left || p.total)} size={46} color={item.status === 'planned' ? colors.dim : colors.accent} />
+      ) : null}
     </PressableScale>
   )
 })

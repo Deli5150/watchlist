@@ -4,7 +4,12 @@
 
 First release.
 
-- Up Next: the next episode of every show you're watching, marked watched in one click
+- A new look inspired by Showline: condensed headlines; show pages with Details, Progress and Cast & Crew tabs
+- Shows: Up Next, an Episode Queue with progress rings, this week's episodes and upcoming seasons
+- Movies: your Watchlist with runtimes, upcoming releases and recently watched
+- Library at a glance: stats and lists for Watching, Watch Later, Caught Up, Finished and more
+- Discover: recommendations from your library, trending and most anticipated
+- Search your library or all of TMDB, with recent searches
 - Library of shows and movies by status, favorites and ratings
 - Show and movie pages: progress, seasons, cast, where to watch, collections, more like this
 - Trailers and clips play in the app, with Open in YouTube
