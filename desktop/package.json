@@ -1,0 +1,111 @@
+{
+  "name": "watchlist",
+  "productName": "WatchList",
+  "version": "1.0.0",
+  "description": "Track the shows and movies you watch",
+  "author": "Deli5150",
+  "license": "MIT",
+  "main": "main.cjs",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "electron": "45.0.0",
+    "electron-builder": "26.18.0"
+  },
+  "build": {
+    "appId": "app.watchlist.tracker",
+    "productName": "WatchList",
+    "copyright": "Copyright \u00a9 2026 WatchList",
+    "directories": {
+      "output": "../dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.cjs",
+      "preload.cjs",
+      "updater.cjs",
+      "google.cjs",
+      "google.json",
+      "web/**",
+      "build/tray*.png",
+      "package.json"
+    ],
+    "artifactName": "${productName}-${version}-${arch}.${ext}",
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "universal"
+          ]
+        }
+      ],
+      "category": "public.app-category.entertainment",
+      "icon": "build/icon.icns",
+      "identity": "-",
+      "hardenedRuntime": false,
+      "artifactName": "${productName}-${version}-mac.${ext}"
+    },
+    "dmg": {
+      "title": "${productName} ${version}",
+      "artifactName": "${productName}-${version}.${ext}"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "WatchList",
+      "artifactName": "${productName}-Setup-${version}.${ext}"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "category": "AudioVideo",
+      "synopsis": "Track the shows and movies you watch",
+      "description": "Track TV shows and movies: what is next, what is airing, where to watch, and your watch history.",
+      "desktop": {
+        "entry": {
+          "StartupWMClass": "WatchList"
+        }
+      }
+    },
+    "appImage": {
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    },
+    "publish": null
+  },
+  "allowScripts": {
+    "electron@45.0.0": true
+  }
+}

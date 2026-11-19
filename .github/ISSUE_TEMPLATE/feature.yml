@@ -1,0 +1,17 @@
+name: Feature idea
+description: Something WatchList should do
+labels: [feature]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: The idea
+      description: What it should do, and why.
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: For
+      multiple: true
+      options: [Desktop (Mac/Windows/Linux), iPhone, Android]
