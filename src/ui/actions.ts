@@ -24,7 +24,7 @@ export function watchEpisode(show: ShowBasics, ep: Ep, runtime?: number | null):
         { label: `Mark ${prev.length} earlier ${prev.length === 1 ? 'episode' : 'episodes'} too`, onPress: () => mark(true) },
         { label: 'Just this one', onPress: () => mark(false) }
       ],
-      `${prev.length} aired ${prev.length === 1 ? 'episode' : 'episodes'} before ${epLabel(ep.season, ep.episode)} ${prev.length === 1 ? 'isn’t' : 'aren’t'} marked yet. (Settings → Episodes changes whether this asks.)`
+      `${prev.length} aired ${prev.length === 1 ? 'episode' : 'episodes'} before ${epLabel(ep.season, ep.episode)} ${prev.length === 1 ? 'isn’t' : 'aren’t'} marked yet. (Settings → “Mark earlier episodes too” changes whether this asks.)`
     )
   } else mark(prev.length > 0 && mode === 'always')
 }
