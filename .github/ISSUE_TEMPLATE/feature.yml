@@ -1,6 +1,6 @@
 name: Feature idea
 description: Something WatchList should do
-labels: [feature]
+labels: [enhancement]
 body:
   - type: textarea
     id: idea

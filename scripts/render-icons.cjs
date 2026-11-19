@@ -33,7 +33,7 @@ app.whenReady().then(async () => {
   await render(win, variants.full, 1024, a('desktop/build/icon.png'))
   await render(win, variants.art, 64, a('desktop/build/tray.png'), 0.9)
   // macOS .icns, with a rounded-square mask like other Mac apps.
-  const rounded = svg.replace('<rect width="1024" height="1024"', '<rect x="100" y="100" width="824" height="824" rx="185"').replace('<g id="art"', '<g transform="translate(100 100) scale(0.8047)"><g id="art"').replace('</g>\n</svg>', '</g></g>\n</svg>')
+  const rounded = svg.replaceAll('<rect width="1024" height="1024"', '<rect x="100" y="100" width="824" height="824" rx="185"').replace('<g id="art"', '<g transform="translate(100 100) scale(0.8047)"><g id="art"').replace('</g>\n</svg>', '</g></g>\n</svg>')
   const set = a('desktop/build/icon.iconset')
   fs.rmSync(set, { recursive: true, force: true })
   for (const s of [16, 32, 128, 256, 512]) {

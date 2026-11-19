@@ -99,6 +99,7 @@ function Shell({ children }: { children: React.ReactNode }) {
           useTab.getState().set(t)
           if (nav.isReady() && nav.canGoBack()) nav.dispatch(StackActions.popToTop())
         }}
+        onFeedback={() => nav.isReady() && nav.navigate('Feedback')}
       />
       <View style={{ flex: 1 }}>{children}</View>
     </View>

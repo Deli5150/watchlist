@@ -17,6 +17,8 @@ export const CHANGELOG: Array<{ version: string; date: string; items: string[] }
       'History with watch time by month',
       'Discover what’s trending, popular, airing and coming soon',
       'Sync with Google across your devices',
+      'Report a bug or request a feature from the app (Send feedback in the sidebar, or Settings)',
+      'A new app icon',
       'In-app updates'
     ]
   }

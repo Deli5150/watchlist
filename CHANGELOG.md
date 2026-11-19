@@ -18,4 +18,6 @@ First release.
 - History with watch time by month
 - Discover and Search
 - Sync with Google
+- Report a bug or request a feature from the app (Send feedback in the sidebar, or Settings)
+- A new app icon
 - In-app updates

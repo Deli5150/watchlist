@@ -12,6 +12,7 @@ import { Group, GroupTitle, Page, Row, Toggle } from '../ui/kit'
 import { showMenu } from '../ui/overlays'
 import { colors, display, THEMES } from '../ui/theme'
 import { VERSION } from '../version'
+import { Wordmark } from '../ui/Sidebar'
 import { regionName } from './more'
 
 export const openUrl = (url: string): void => {
@@ -93,7 +94,7 @@ export default function Settings() {
       </Pressable>
       <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 22, paddingHorizontal: 6 }}>
         <Image source={require('../../assets/icon.png')} style={{ width: 30, height: 30, borderRadius: 8 }} />
-        <Text style={[display(24), { marginLeft: 10, flex: 1 }]}>WATCHLIST</Text>
+        <Wordmark size={24} style={{ marginLeft: 10, flex: 1 }} />
         <View style={{ backgroundColor: colors.card, borderRadius: 14, paddingHorizontal: 12, height: 28, justifyContent: 'center', borderWidth: 1, borderColor: colors.border }}>
           <Text style={{ color: colors.text, fontSize: 13, fontWeight: '700' }}>{`Version ${VERSION}`}</Text>
         </View>

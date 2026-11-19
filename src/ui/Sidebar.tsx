@@ -6,10 +6,10 @@ import { useTab } from '../lib/layout'
 import { useStore } from '../lib/store'
 import { useSyncBusy } from '../lib/syncRunner'
 import { TABS, type TabKey } from './TabBar'
-import { colors } from './theme'
+import { colors, display } from './theme'
 
 /** The desktop app's navigation, on the left of the window. */
-export function Sidebar({ onTab }: { onTab: (t: TabKey) => void }) {
+export function Sidebar({ onTab, onFeedback }: { onTab: (t: TabKey) => void; onFeedback: () => void }) {
   const tab = useTab((s) => s.tab)
   const { sync, shows, movies } = useStore(
     useShallow((s) => ({ sync: s.sync, shows: s.items.filter((i) => i.type === 'tv' && i.status === 'watching').length, movies: s.items.filter((i) => i.type === 'movie' && i.status === 'planned').length }))
@@ -18,8 +18,8 @@ export function Sidebar({ onTab }: { onTab: (t: TabKey) => void }) {
   return (
     <View style={{ width: 224, backgroundColor: colors.cardHi, borderRightWidth: 1, borderColor: colors.border, paddingHorizontal: 14, paddingTop: 22, paddingBottom: 18 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 6, marginBottom: 26 }}>
-        <Image source={require('../../assets/icon.png')} style={{ width: 30, height: 30, borderRadius: 8 }} />
-        <Text style={{ color: colors.text, fontSize: 19, fontWeight: '800', marginLeft: 10 }}>WatchList</Text>
+        <Image source={require('../../assets/icon.png')} style={{ width: 36, height: 36, borderRadius: 9 }} />
+        <Wordmark size={27} style={{ marginLeft: 11 }} />
       </View>
       {TABS.map((t) => {
         const on = t.key === tab
@@ -45,6 +45,14 @@ export function Sidebar({ onTab }: { onTab: (t: TabKey) => void }) {
         )
       })}
       <View style={{ flex: 1 }} />
+      <Pressable
+        accessibilityLabel="Send feedback"
+        onPress={onFeedback}
+        style={(state) => ({ flexDirection: 'row', alignItems: 'center', height: 38, borderRadius: 10, paddingHorizontal: 10, marginBottom: 14, borderWidth: 1, borderColor: colors.border, backgroundColor: (state as { hovered?: boolean }).hovered || state.pressed ? 'rgba(255,255,255,0.06)' : 'transparent' })}
+      >
+        <Ionicons name="chatbubble-ellipses-outline" size={17} color={colors.dim} />
+        <Text style={{ color: colors.dim, fontSize: 14, fontWeight: '600', marginLeft: 10 }}>Send feedback</Text>
+      </Pressable>
       <View style={{ paddingHorizontal: 6 }}>
         <Text style={{ color: colors.dim, fontSize: 13 }}>{`${shows} watching · ${movies} ${movies === 1 ? 'movie' : 'movies'} to watch`}</Text>
         {sync.enabled && (
@@ -55,5 +63,14 @@ export function Sidebar({ onTab }: { onTab: (t: TabKey) => void }) {
         )}
       </View>
     </View>
+  )
+}
+
+/** "WATCHLIST" in the condensed headline font, LIST in the accent. */
+export function Wordmark({ size, style }: { size: number; style?: object }) {
+  return (
+    <Text style={[display(size), { letterSpacing: 0.4 }, style]}>
+      WATCH<Text style={{ color: colors.accentHi }}>LIST</Text>
+    </Text>
   )
 }
