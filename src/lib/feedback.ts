@@ -17,21 +17,28 @@ export function feedbackWhere(kind: FeedbackKind): string {
   return desktop?.platform === 'win32' ? 'Windows' : desktop?.platform === 'linux' ? 'Linux' : 'Mac'
 }
 
+/** A query string from fields (React Native's URLSearchParams can't set values). */
+const query = (fields: Record<string, string>): string =>
+  Object.entries(fields)
+    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+    .join('&')
+
 /** The link to the repo's new-issue form, filled in. */
 export function feedbackUrl(kind: FeedbackKind, title: string, text: string, version: string): string {
-  const q = new URLSearchParams({ template: kind === 'bug' ? 'bug.yml' : 'feature.yml', title: title.trim() })
-  q.set(kind === 'bug' ? 'what' : 'idea', text.trim())
-  q.set('platform', feedbackWhere(kind))
+  const fields: Record<string, string> = { template: kind === 'bug' ? 'bug.yml' : 'feature.yml', title: title.trim() }
+  const textField = kind === 'bug' ? 'what' : 'idea'
+  fields[textField] = text.trim()
+  fields.platform = feedbackWhere(kind)
   if (kind === 'bug') {
-    q.set('version', version)
+    fields.version = version
     const os = Platform.OS === 'web' ? (desktop?.platform ?? 'web') : `${Platform.OS} ${String(Platform.Version)}`
-    q.set('extra', `Device: ${os}`)
+    fields.extra = `Device: ${os}`
   }
   // GitHub rejects very long links; cut the description to fit.
-  let url = `${REPO_URL}/issues/new?${q.toString()}`
+  let url = `${REPO_URL}/issues/new?${query(fields)}`
   if (url.length > 7500) {
-    q.set(kind === 'bug' ? 'what' : 'idea', `${text.trim().slice(0, 5000)}…`)
-    url = `${REPO_URL}/issues/new?${q.toString()}`
+    fields[textField] = `${text.trim().slice(0, 5000)}…`
+    url = `${REPO_URL}/issues/new?${query(fields)}`
   }
   return url
 }

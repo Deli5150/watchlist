@@ -39,12 +39,14 @@ export class TmdbError extends Error {}
 
 async function request<T>(path: string, params: Record<string, string | number | undefined>): Promise<T> {
   if (!KEY) throw new TmdbError('WatchList was built without a TMDB key (see README → TMDB).')
-  const q = new URLSearchParams()
-  for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== '') q.set(k, String(v))
+  // (Built by hand: React Native's URLSearchParams can't set values.)
+  const q = Object.entries(params)
+    .filter(([, v]) => v !== undefined && v !== '')
+    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
   // A v4 read access token is a JWT; a v3 key is 32 hex characters.
   const bearer = KEY.startsWith('eyJ')
-  if (!bearer) q.set('api_key', KEY)
-  const res = await fetch(`${BASE}${path}?${q}`, { headers: bearer ? { Authorization: `Bearer ${KEY}`, Accept: 'application/json' } : { Accept: 'application/json' } })
+  if (!bearer) q.push(`api_key=${encodeURIComponent(KEY)}`)
+  const res = await fetch(`${BASE}${path}?${q.join('&')}`, { headers: bearer ? { Authorization: `Bearer ${KEY}`, Accept: 'application/json' } : { Accept: 'application/json' } })
   if (res.status === 404) throw new TmdbError('Not found on TMDB')
   if (!res.ok) throw new TmdbError(`TMDB answered ${res.status}`)
   return (await res.json()) as T

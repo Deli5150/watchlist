@@ -1,3 +1,4 @@
+import { Platform } from 'react-native'
 import { addDays, today } from './dates'
 import { desktop } from './storage'
 import { useStore } from './store'
@@ -63,19 +64,33 @@ export async function upcomingMovies(items: LibraryItem[], from = addDays(today(
   return out
 }
 
-/** Desktop: schedule a notification on the morning each followed show's new episode airs. */
+export interface Alert {
+  id: string
+  at: number
+  title: string
+  body: string
+}
+
+/** What was last scheduled, so changes that don't affect any alert schedule nothing. */
+let lastScheduled = ''
+
+/**
+ * Schedules a notification for the morning (9:00) each followed show's new episode airs, over the
+ * next month: through the desktop app's scheduler, or the phone's notifications.
+ */
 export async function scheduleAlerts(shows: Record<number, ShowBasics>): Promise<void> {
-  if (!desktop) return
+  if (!desktop && Platform.OS === 'web') return
   const { items, settings } = useStore.getState()
-  if (!settings.notifications) return desktop.setReminders([])
-  const eps = await upcomingEpisodes(
-    items.filter((i) => i.status === 'watching' || i.status === 'planned' || i.status === 'completed'),
-    shows,
-    today(),
-    addDays(today(), 30)
-  )
-  desktop.setReminders(
-    eps.map((u) => {
+  const eps = settings.notifications
+    ? await upcomingEpisodes(
+        items.filter((i) => i.status === 'watching' || i.status === 'planned' || i.status === 'completed'),
+        shows,
+        today(),
+        addDays(today(), 30)
+      )
+    : []
+  const alerts: Alert[] = eps
+    .map((u) => {
       const [y, m, d] = u.date.split('-').map(Number)
       return {
         id: `${u.item.id}:${u.episode.season_number}:${u.episode.episode_number}`,
@@ -84,5 +99,30 @@ export async function scheduleAlerts(shows: Record<number, ShowBasics>): Promise
         body: `S${u.episode.season_number} · E${u.episode.episode_number}${u.episode.name ? ` · ${u.episode.name}` : ''} is out today.`
       }
     })
-  )
+    .filter((a) => a.at > Date.now())
+    .slice(0, 60)
+  const key = JSON.stringify(alerts)
+  if (key === lastScheduled) return
+  lastScheduled = key
+  if (desktop) desktop.setReminders(alerts)
+  else await scheduleNative(alerts).catch((e) => console.warn('WatchList: alerts', e))
+}
+
+async function scheduleNative(alerts: Alert[]): Promise<void> {
+  const N = await import('expo-notifications')
+  if (Platform.OS === 'android') await N.setNotificationChannelAsync('episodes', { name: 'New episodes', importance: N.AndroidImportance.HIGH })
+  await N.cancelAllScheduledNotificationsAsync()
+  if (!alerts.length) return
+  const perm = await N.getPermissionsAsync()
+  if (!perm.granted) {
+    if (!perm.canAskAgain) return
+    if (!(await N.requestPermissionsAsync()).granted) return
+  }
+  for (const a of alerts) {
+    await N.scheduleNotificationAsync({
+      identifier: a.id,
+      content: { title: a.title, body: a.body, sound: true },
+      trigger: { type: N.SchedulableTriggerInputTypes.DATE, date: new Date(a.at), channelId: 'episodes' }
+    })
+  }
 }

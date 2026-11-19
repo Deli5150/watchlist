@@ -1,6 +1,6 @@
 # WatchList
 
-Track the shows and movies you watch — inspired by the iOS app Showline. For **macOS** and **Windows**, with Android next.
+Track the shows and movies you watch — inspired by the iOS app Showline. For **macOS**, **Windows** and **Android**.
 
 - **Up Next** — the next episode of every show you're watching; mark it watched in one click (with Undo, and an offer to mark earlier episodes too).
 - **Library** — shows and movies by status: Watching, Watchlist, Finished, Paused, Dropped, plus Favorites, your ratings and sorting.
@@ -11,6 +11,21 @@ Track the shows and movies you watch — inspired by the iOS app Showline. For *
 - **Discover and Search** — trending, popular, airing today, in theaters, coming soon, top rated, genres; search shows, movies and people.
 - **Sync with Google** — your library and history in a private Google Drive app folder, merged per item across devices.
 - **In-app updates** from GitHub Releases, backups (JSON) and history export (CSV), 9 themes, 8 languages.
+
+## Screenshots
+
+### Desktop (macOS / Windows)
+
+| | |
+|---|---|
+| ![Shows](docs/screenshots/desktop-shows.png) | ![Show page](docs/screenshots/desktop-title.png) |
+| ![Progress](docs/screenshots/desktop-progress.png) | ![Library](docs/screenshots/desktop-library.png) |
+| ![Discover](docs/screenshots/desktop-discover.png) | ![Calendar](docs/screenshots/desktop-calendar.png) |
+| ![History](docs/screenshots/desktop-history.png) | ![Movies](docs/screenshots/desktop-movies.png) |
+
+### Android
+
+<img src="docs/screenshots/android-discover.png" width="300" alt="Discover on Android">
 
 ## Data sources
 
