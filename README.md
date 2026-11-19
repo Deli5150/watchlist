@@ -1,4 +1,4 @@
-# WatchList
+# WatchLine
 
 Track the shows and movies you watch — inspired by the iOS app Showline. For **macOS**, **Windows** and **Android**.
 
@@ -54,7 +54,7 @@ Google Cloud project "WatchList", scope `drive.appdata` (+ email). Desktop OAuth
 ## Building
 
 ```sh
-npm run dist:desktop    # dist/: WatchList-<v>.dmg, WatchList-<v>-mac.zip, WatchList-Setup-<v>.exe
+npm run dist:desktop    # dist/: WatchLine-<v>.dmg, WatchLine-<v>-mac.zip, WatchLine-Setup-<v>.exe
 npx expo prebuild --platform android && npm run dist:android   # APK (release key: credentials/, passwords in ~/.gradle/gradle.properties)
 npm run release         # GitHub release for package.json's version, notes from CHANGELOG.md
 ```

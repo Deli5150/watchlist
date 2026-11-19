@@ -1,4 +1,4 @@
-// Where WatchList's updates come from: the GitHub repo's Releases (published by scripts/release.mjs).
+// Where WatchLine's updates come from: the GitHub repo's Releases (published by scripts/release.mjs).
 // desktop/updater.cjs has the same file-name patterns for the desktop installs.
 
 export const RELEASE_REPO = 'Deli5150/watchlist'

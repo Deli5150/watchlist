@@ -174,11 +174,12 @@ export function setSkippedSeason(show: ShowBasics, seasonNumber: number, skipped
 }
 
 export const STATUS_LABEL: Record<Status, string> = {
-  watching: 'Watching',
+  watching: 'Watchlist',
   planned: 'Watch Later',
+  later: 'Watch Later',
   completed: 'Finished',
-  paused: 'Paused',
-  dropped: 'Dropped'
+  paused: 'Watch Later',
+  dropped: 'Watch Later'
 }
 
 export const MOVIE_STATUS_LABEL: Record<Status, string> = { ...STATUS_LABEL, planned: 'Watchlist', completed: 'Watched' }

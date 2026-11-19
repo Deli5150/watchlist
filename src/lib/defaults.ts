@@ -1,7 +1,7 @@
 import { getLocales } from 'expo-localization'
 import type { AppData, Settings } from './types'
 
-/** TMDB languages WatchList offers (the same ones Showline translates into). */
+/** TMDB languages WatchLine offers (the same ones Showline translates into). */
 export const LANGUAGES: Array<{ code: string; name: string }> = [
   { code: 'en-US', name: 'English' },
   { code: 'es-ES', name: 'Español' },
@@ -43,6 +43,10 @@ export const DEFAULT_SETTINGS: Settings = {
   searchScope: 'discover',
   recentSearches: [],
   markPrevious: 'ask',
+  wallpaper: '',
+  wallpaperDim: 0.55,
+  wallpaperBlur: false,
+  wallpaperStamp: 0,
   lastSeenVersion: '',
   skippedVersion: '',
   laterVersion: '',

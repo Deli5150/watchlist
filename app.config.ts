@@ -7,7 +7,7 @@ const IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? ''
 const [major, minor, patch] = version.split('.').map(Number)
 
 const config: ExpoConfig = {
-  name: 'WatchList',
+  name: 'WatchLine',
   slug: 'watchlist',
   scheme: 'watchlist',
   version,

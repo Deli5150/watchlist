@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import type { UpdateStatus } from './release'
 
-// Where WatchList keeps its data: on desktop, a JSON file in the app's data folder (through the
+// Where WatchLine keeps its data: on desktop, a JSON file in the app's data folder (through the
 // Electron preload's bridge); on phones (and a plain browser), AsyncStorage. TMDB responses are
 // cached the same way (desktop: one file each).
 
@@ -19,6 +19,10 @@ export interface DesktopBridge {
     get(key: string): Promise<string | null>
     set(key: string, json: string): Promise<void>
     clear(): Promise<void>
+  }
+  wallpaper: {
+    get(): Promise<string | null>
+    set(dataUrl: string | null): Promise<void>
   }
   openExternal(url: string): void
   google: {

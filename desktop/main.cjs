@@ -6,13 +6,19 @@ const updater = require('./updater.cjs')
 const google = require('./google.cjs')
 const { version } = require('./package.json')
 
-// WatchList's desktop shell: the app's web build (web/, from `expo export`) served over app://,
+// WatchLine's desktop shell: the app's web build (web/, from `expo export`) served over app://,
 // with its data in a JSON file, TMDB responses cached as files, new-episode alerts as system
-// notifications (WatchList keeps running in the background for them), and the updater (updater.cjs).
+// notifications (WatchLine keeps running in the background for them), and the updater (updater.cjs).
 
 const WEB = path.join(__dirname, 'web')
 const DATA = () => path.join(app.getPath('userData'), 'watchlist.json')
 const REMINDERS = () => path.join(app.getPath('userData'), 'reminders.json')
+
+// The app was called WatchList: keep using its data folder (the name picks the folder otherwise).
+if (!app.commandLine.hasSwitch('user-data-dir')) {
+  const old = path.join(app.getPath('appData'), 'WatchList')
+  if (fs.existsSync(old)) app.setPath('userData', old)
+}
 
 protocol.registerSchemesAsPrivileged([{ scheme: 'app', privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true } }])
 
@@ -53,7 +59,7 @@ function createWindow() {
     height: 820,
     minWidth: 420,
     minHeight: 600,
-    title: 'WatchList',
+    title: 'WatchLine',
     backgroundColor: '#0a0a0c',
     show: false,
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
@@ -81,7 +87,7 @@ function createWindow() {
       win.webContents.executeJavaScript(`if(!document.getElementById('watchlist-drag')){const d=document.createElement('div');d.id='watchlist-drag';document.body.prepend(d)}`)
     })
   }
-  // Links open in the browser, never inside WatchList.
+  // Links open in the browser, never inside WatchLine.
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (/^https?:/.test(url)) void shell.openExternal(url)
     return { action: 'deny' }
@@ -92,7 +98,7 @@ function createWindow() {
       if (/^https?:/.test(url)) void shell.openExternal(url)
     }
   })
-  // Closing the window keeps WatchList running for new-episode alerts (quit from the menu, dock or tray).
+  // Closing the window keeps WatchLine running for new-episode alerts (quit from the menu, dock or tray).
   win.on('close', (e) => {
     if (!app.isQuitting) {
       e.preventDefault()
@@ -113,10 +119,10 @@ function createTray() {
   if (process.platform === 'darwin') return
   const icon = nativeImage.createFromPath(path.join(__dirname, 'build', 'tray.png')).resize({ width: 18, height: 18 })
   tray = new Tray(icon)
-  tray.setToolTip('WatchList')
+  tray.setToolTip('WatchLine')
   tray.setContextMenu(
     Menu.buildFromTemplate([
-      { label: 'Open WatchList', click: showWindow },
+      { label: 'Open WatchLine', click: showWindow },
       { type: 'separator' },
       { label: 'Quit', click: () => ((app.isQuitting = true), app.quit()) }
     ])
@@ -183,7 +189,7 @@ function notify(title, body) {
   n.show()
 }
 
-/** Shows reminders that are due (or were missed in the last day while WatchList wasn't running). */
+/** Shows reminders that are due (or were missed in the last day while WatchLine wasn't running). */
 function fireDue() {
   const now = Date.now()
   let changed = false
@@ -222,6 +228,22 @@ ipcMain.handle('cache:set', (_e, key, json) => {
   fs.writeFileSync(cacheFile(key), json)
 })
 ipcMain.handle('cache:clear', () => fs.rmSync(CACHE(), { recursive: true, force: true }))
+
+// ── Your own wallpaper ───────────────────────────────────────────────────────────────────────
+// An image you picked (resized to a JPEG data URL by the app), kept beside the data file.
+
+const WALLPAPER = () => path.join(app.getPath('userData'), 'wallpaper.txt')
+ipcMain.handle('wallpaper:get', () => {
+  try {
+    return fs.readFileSync(WALLPAPER(), 'utf8')
+  } catch {
+    return null
+  }
+})
+ipcMain.handle('wallpaper:set', (_e, dataUrl) => {
+  if (dataUrl) fs.writeFileSync(WALLPAPER(), dataUrl)
+  else fs.rmSync(WALLPAPER(), { force: true })
+})
 
 // ── Sync with Google ─────────────────────────────────────────────────────────────────────────
 

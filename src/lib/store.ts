@@ -5,7 +5,7 @@ import { emptyMeta, stampChanges, type SyncMeta } from './sync'
 import { setLocale } from './tmdb'
 import type { AppData, LibraryItem, Settings, Status, Watch } from './types'
 
-// All of WatchList's data in one store, saved (shortly after each change) as a single JSON document:
+// All of WatchLine's data in one store, saved (shortly after each change) as a single JSON document:
 // your library (shows and movies with their status) and every episode or movie you've watched.
 
 interface Store extends AppData {
@@ -60,7 +60,7 @@ export const useStore = create<Store>((set, get) => ({
         set({ ...normalize(raw), sync: { ...emptyMeta(), ...raw.sync } })
       }
     } catch (e) {
-      console.warn('WatchList: could not read saved data', e)
+      console.warn('WatchLine: could not read saved data', e)
     }
     const { language, region } = get().settings
     setLocale(language, region)

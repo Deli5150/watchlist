@@ -1,7 +1,9 @@
 export type MediaType = 'tv' | 'movie'
 
 /** Where a title sits in your library. Movies use planned → completed. */
-export type Status = 'watching' | 'planned' | 'completed' | 'paused' | 'dropped'
+// Shows: watching (Watchlist), planned (Watch Later), completed. Movies: planned (Watchlist), later
+// (Watch Later), completed. paused and dropped are no longer offered; old ones count as Watch Later.
+export type Status = 'watching' | 'planned' | 'later' | 'completed' | 'paused' | 'dropped'
 
 /** A show or movie in your library, with enough of TMDB's details to list it offline. */
 export interface LibraryItem {
@@ -59,6 +61,13 @@ export interface Settings {
   recentSearches: string[]
   /** Ask before marking earlier episodes too. */
   markPrevious: 'ask' | 'always' | 'never'
+  /** Behind the pages: '' (the theme's colour), a built-in wallpaper's id, or 'custom' (your own picture). This device only. */
+  wallpaper: string
+  /** How much the wallpaper is darkened, 0–1, and whether it's blurred. */
+  wallpaperDim: number
+  wallpaperBlur: boolean
+  /** Changes whenever you pick a new picture of your own, so it's reloaded. */
+  wallpaperStamp: number
   lastSeenVersion: string
   skippedVersion: string
   laterVersion: string

@@ -105,7 +105,7 @@ export async function scheduleAlerts(shows: Record<number, ShowBasics>): Promise
   if (key === lastScheduled) return
   lastScheduled = key
   if (desktop) desktop.setReminders(alerts)
-  else await scheduleNative(alerts).catch((e) => console.warn('WatchList: alerts', e))
+  else await scheduleNative(alerts).catch((e) => console.warn('WatchLine: alerts', e))
 }
 
 async function scheduleNative(alerts: Alert[]): Promise<void> {

@@ -1,19 +1,35 @@
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
+import { Image } from 'expo-image'
 import { LinearGradient } from 'expo-linear-gradient'
 import type { ComponentProps, ReactNode } from 'react'
 import { Children, Fragment, isValidElement } from 'react'
 import { Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View, type TextInputProps, type TextStyle, type ViewStyle } from 'react-native'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
-import { colors, MAX_WIDTH, radius } from './theme'
+import { useStore } from '../lib/store'
+import { useWallpaper } from '../lib/wallpaper'
+import { colors, hexA, MAX_WIDTH, radius } from './theme'
 
 export type IconName = ComponentProps<typeof Ionicons>['name']
 
-/** The app's backdrop: the theme's background with a soft glow of the accent at the top. */
+/**
+ * The app's backdrop: the theme's background with a soft glow of the accent at the top, or your
+ * wallpaper, darkened (more towards the bottom) so the page stays readable.
+ */
 export function Backdrop() {
+  const wallpaper = useWallpaper()
+  const dim = useStore((s) => s.settings.wallpaperDim)
+  const blur = useStore((s) => s.settings.wallpaperBlur)
   return (
     <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg }]} pointerEvents="none">
-      <LinearGradient colors={[colors.bgGlow, 'rgba(0,0,0,0)']} style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 360, opacity: 0.6 }} />
+      {wallpaper ? (
+        <>
+          <Image source={wallpaper} style={StyleSheet.absoluteFill} contentFit="cover" blurRadius={blur ? 24 : 0} transition={150} />
+          <LinearGradient colors={[hexA(colors.bg, dim * 0.85), hexA(colors.bg, Math.min(1, dim + 0.2))]} style={StyleSheet.absoluteFill} />
+        </>
+      ) : (
+        <LinearGradient colors={[colors.bgGlow, 'rgba(0,0,0,0)']} style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 360, opacity: 0.6 }} />
+      )}
     </View>
   )
 }

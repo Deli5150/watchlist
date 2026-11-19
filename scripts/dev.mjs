@@ -31,7 +31,7 @@ async function waitForServer() {
 }
 
 await waitForServer()
-console.log(`\nOpening WatchList (desktop) on ${url}\n`)
+console.log(`\nOpening WatchLine (desktop) on ${url}\n`)
 const electron = path.join(root, 'desktop/node_modules/.bin/electron')
 const app = spawn(electron, ['.', `--user-data-dir=${path.join(root, '.dev-data')}`], { cwd: path.join(root, 'desktop'), stdio: 'inherit', env: { ...process.env, ...dotenv, WATCHLIST_DEV_URL: url } })
 const stop = () => {

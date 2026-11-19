@@ -85,7 +85,7 @@ function moreMenu(type: MediaType, d: Details, item: LibraryItem | undefined) {
   const title = titleOf(d)
   const imdb = type === 'tv' ? (d as ShowDetails).external_ids?.imdb_id : (d as MovieDetails).imdb_id
   showMenu(title, [
-    { label: item ? 'Change status…' : 'Add to WatchList…', onPress: () => chooseStatus(type, d as ShowDetails & MovieDetails, title) },
+    { label: item ? 'Change status…' : 'Add to Library…', onPress: () => chooseStatus(type, d as ShowDetails & MovieDetails, title) },
     ...(item ? [{ label: item.favorite ? 'Remove from favorites' : 'Add to favorites', onPress: () => useStore.getState().updateItem(item.id, { favorite: !item.favorite }) }] : []),
     ...(item ? [{ label: item.rating ? `Your rating: ${item.rating}/10` : 'Rate…', onPress: () => rate(item, title) }] : []),
     { label: 'Share', onPress: () => void Share.share({ message: `${title} — https://www.themoviedb.org/${type}/${d.id}` }) },
@@ -287,7 +287,7 @@ function Actions({ type, d, item, title }: { type: MediaType; d: Details; item: 
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 22 }}>
       <BigButton
         icon={item ? 'bookmark' : 'add'}
-        label={item ? labels[item.status] : 'Add to WatchList'}
+        label={item ? labels[item.status] : 'Add to Library'}
         tone={item ? 'plain' : 'accent'}
         chevron={Boolean(item)}
         onPress={() => chooseStatus(type, d as ShowDetails & MovieDetails, title)}

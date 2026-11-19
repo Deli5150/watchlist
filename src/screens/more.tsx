@@ -2,8 +2,9 @@ import { Ionicons } from '@expo/vector-icons'
 import * as DocumentPicker from 'expo-document-picker'
 import { cacheDirectory, EncodingType, readAsStringAsync, writeAsStringAsync } from 'expo-file-system/legacy'
 import * as Sharing from 'expo-sharing'
+import { Image } from 'expo-image'
 import { useMemo, useState } from 'react'
-import { ActivityIndicator, Platform, Pressable, Text, View } from 'react-native'
+import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from 'react-native'
 import { useShallow } from 'zustand/react/shallow'
 import { CHANGELOG } from '../data/changelog'
 import { dateOfTime } from '../lib/dates'
@@ -18,6 +19,7 @@ import { exportData, normalize, useStore } from '../lib/store'
 import { syncNow, turnOffSync, turnOnSync, useSyncBusy } from '../lib/syncRunner'
 import { tmdb } from '../lib/tmdb'
 import type { AppData } from '../lib/types'
+import { importWallpaper, useWallpaper, WALLPAPERS } from '../lib/wallpaper'
 import { checkForUpdates, downloadUpdate, installUpdate, useUpdate } from '../lib/updater'
 import { Field, Group, Header, Page, Row, SearchField, SectionLabel, Segmented, Toggle } from '../ui/kit'
 import { confirm } from '../ui/overlays'
@@ -30,10 +32,41 @@ import { openUrl } from './Settings'
 
 // ── Appearance ──────────────────────────────────────────────────────────────────────────────────
 
-export function AppearanceScreen() {
-  const { theme, setSettings } = useStore(useShallow((s) => ({ theme: s.settings.theme, setSettings: s.setSettings })))
+const DIMS = [
+  { label: 'Light', value: '0.35' },
+  { label: 'Medium', value: '0.55' },
+  { label: 'Dark', value: '0.75' }
+]
+
+/** A wallpaper to pick: its picture (or the theme's colour), name, and a tick when it's on. */
+function WallpaperTile({ name, on, onPress, children }: { name: string; on: boolean; onPress: () => void; children: React.ReactNode }) {
   return (
-    <Page header={<Header title="Appearance" />}>
+    <Pressable accessibilityLabel={`Wallpaper: ${name}`} onPress={onPress} style={{ width: '33.33%', padding: 5 }}>
+      <View style={{ aspectRatio: 4 / 3, borderRadius: 14, overflow: 'hidden', borderWidth: 2, borderColor: on ? colors.accent : colors.border, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' }}>
+        {children}
+        {on && (
+          <View style={{ position: 'absolute', top: 6, right: 6, width: 22, height: 22, borderRadius: 11, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' }}>
+            <Ionicons name="checkmark" size={14} color={colors.onAccent} />
+          </View>
+        )}
+      </View>
+      <Text style={{ color: on ? colors.text : colors.dim, fontSize: 13, marginTop: 6, textAlign: 'center', fontWeight: on ? '700' : '500' }}>{name}</Text>
+    </Pressable>
+  )
+}
+
+export function AppearanceScreen() {
+  const { theme, wallpaper, dim, blur, stamp, setSettings } = useStore(
+    useShallow((s) => ({ theme: s.settings.theme, wallpaper: s.settings.wallpaper, dim: s.settings.wallpaperDim, blur: s.settings.wallpaperBlur, stamp: s.settings.wallpaperStamp, setSettings: s.setSettings }))
+  )
+  const current = useWallpaper()
+  const [note, setNote] = useState<string | null>(null)
+  const pickOwn = () => {
+    setNote(null)
+    importWallpaper().catch((e: Error) => setNote(`That picture couldn’t be used: ${e.message}`))
+  }
+  return (
+    <Page header={<Header title="Theme & Wallpaper" />}>
       <SectionLabel>Theme</SectionLabel>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5, marginBottom: 20 }}>
         {Object.entries(THEMES).map(([id, t]) => {
@@ -50,6 +83,30 @@ export function AppearanceScreen() {
           )
         })}
       </View>
+      <SectionLabel>Wallpaper</SectionLabel>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5, marginBottom: 12 }}>
+        <WallpaperTile name="None" on={!wallpaper} onPress={() => setSettings({ wallpaper: '' })}>
+          <Ionicons name="color-palette-outline" size={24} color={colors.accent} />
+        </WallpaperTile>
+        {WALLPAPERS.map((w) => (
+          <WallpaperTile key={w.id} name={w.name} on={wallpaper === w.id} onPress={() => setSettings({ wallpaper: w.id })}>
+            <Image source={w.thumb} style={StyleSheet.absoluteFill} contentFit="cover" />
+          </WallpaperTile>
+        ))}
+        <WallpaperTile name={stamp ? 'Your picture' : 'Import…'} on={wallpaper === 'custom'} onPress={() => (stamp && wallpaper !== 'custom' ? setSettings({ wallpaper: 'custom' }) : pickOwn())}>
+          {wallpaper === 'custom' && current ? <Image source={current} style={StyleSheet.absoluteFill} contentFit="cover" /> : null}
+          {!(wallpaper === 'custom' && current) && <Ionicons name="image-outline" size={26} color={colors.dim} />}
+        </WallpaperTile>
+      </View>
+      {note && <Text style={{ color: colors.danger, fontSize: 13, marginBottom: 12, paddingHorizontal: 4 }}>{note}</Text>}
+      <Group>
+        <Row icon="images-outline" label={stamp ? 'Choose another picture…' : 'Import your own picture…'} sub="A photo or image from this device" onPress={pickOwn} />
+        {wallpaper ? (
+          <Row icon="contrast-outline" label="Darken" right={<View style={{ width: 210 }}><Segmented options={DIMS} value={String(dim)} onChange={(v) => setSettings({ wallpaperDim: Number(v) })} /></View>} />
+        ) : null}
+        {wallpaper ? <Row icon="water-outline" label="Blur" right={<Toggle value={blur} onChange={(v) => setSettings({ wallpaperBlur: v })} />} /> : null}
+      </Group>
+      <Text style={{ color: colors.faint, fontSize: 13, lineHeight: 18, paddingHorizontal: 4 }}>The wallpaper shows behind your pages on this device. Your own picture stays on this device and isn’t synced.</Text>
     </Page>
   )
 }
@@ -122,7 +179,7 @@ export function DataScreen() {
   const [note, setNote] = useState<string | null>(null)
   const stamp = new Date().toISOString().slice(0, 10)
 
-  const exportJson = () => void saveText(`WatchList-${stamp}.json`, JSON.stringify(exportData(), null, 2), 'application/json')
+  const exportJson = () => void saveText(`WatchLine-${stamp}.json`, JSON.stringify(exportData(), null, 2), 'application/json')
   const exportCsv = () => {
     const byId = new Map(items.map((i) => [i.id, i]))
     const rows = [
@@ -134,7 +191,7 @@ export function DataScreen() {
           return [new Date(w.at).toISOString(), i?.type === 'movie' ? 'Movie' : 'Episode', i?.title ?? '', w.season ?? '', w.episode ?? '', w.runtime, i?.tmdbId ?? '']
         })
     ]
-    void saveText(`WatchList-history-${stamp}.csv`, rows.map((r) => r.map(csvCell).join(',')).join('\n'), 'text/csv')
+    void saveText(`WatchLine-history-${stamp}.csv`, rows.map((r) => r.map(csvCell).join(',')).join('\n'), 'text/csv')
   }
   const importJson = async () => {
     const res = await DocumentPicker.getDocumentAsync({ type: ['application/json', '*/*'], copyToCacheDirectory: true })
@@ -145,12 +202,12 @@ export function DataScreen() {
       const raw = JSON.parse(text) as Partial<AppData>
       if (!Array.isArray(raw.items)) throw new Error('not a backup')
       const data = normalize(raw)
-      confirm('Replace your library?', `This backup has ${data.items.length} titles and ${data.watches.length} watched episodes and movies. What’s in WatchList now is replaced.`, 'Replace', () => {
+      confirm('Replace your library?', `This backup has ${data.items.length} titles and ${data.watches.length} watched episodes and movies. What’s in WatchLine now is replaced.`, 'Replace', () => {
         replaceAll(data)
         setNote(`Restored ${data.items.length} titles.`)
       })
     } catch {
-      setNote('That file isn’t a WatchList backup.')
+      setNote('That file isn’t a WatchLine backup.')
     }
   }
 
@@ -159,7 +216,7 @@ export function DataScreen() {
       <SectionLabel>Backup</SectionLabel>
       <Group>
         <Row icon="download-outline" label="Export backup" sub="Your library and history, as a JSON file" onPress={exportJson} />
-        <Row icon="push-outline" label="Restore backup" sub="From a WatchList JSON file" onPress={() => void importJson()} />
+        <Row icon="push-outline" label="Restore backup" sub="From a WatchLine JSON file" onPress={() => void importJson()} />
         <Row icon="grid-outline" label="Export history" sub="Everything you watched, as CSV" onPress={exportCsv} />
       </Group>
       {note && <Text style={{ color: colors.dim, textAlign: 'center', marginBottom: 14 }}>{note}</Text>}
@@ -180,7 +237,7 @@ export function DataScreen() {
           onPress={() => confirm('Erase everything?', 'Your whole library and watch history are deleted. Export a backup first if you might want them.', 'Erase all', eraseAll)}
         />
       </Group>
-      <Text style={{ color: colors.faint, fontSize: 13, lineHeight: 18 }}>Your library stays on this device (and in your Google Drive if Sync is on). WatchList only talks to TMDB to look up shows and movies.</Text>
+      <Text style={{ color: colors.faint, fontSize: 13, lineHeight: 18 }}>Your library stays on this device (and in your Google Drive if Sync is on). WatchLine only talks to TMDB to look up shows and movies.</Text>
     </Page>
   )
 }
@@ -212,7 +269,7 @@ export function UpdatesScreen() {
     u.state === 'checking'
       ? 'Checking…'
       : u.state === 'latest'
-        ? 'WatchList is up to date.'
+        ? 'WatchLine is up to date.'
         : u.state === 'available'
           ? `Version ${u.version} is available.`
           : u.state === 'downloading'
@@ -220,7 +277,7 @@ export function UpdatesScreen() {
             : u.state === 'ready'
               ? `Version ${u.version} is ready to install.`
               : u.state === 'installing'
-                ? 'Installing… WatchList will restart.'
+                ? 'Installing… WatchLine will restart.'
                 : u.state === 'error'
                   ? u.error
                   : 'Check for a new version.'
@@ -228,7 +285,7 @@ export function UpdatesScreen() {
   return (
     <Page header={<Header title="Updates" />}>
       <View style={{ alignItems: 'center', marginVertical: 22 }}>
-        <Text style={{ color: colors.text, fontSize: 28, fontWeight: '700' }}>WatchList {VERSION}</Text>
+        <Text style={{ color: colors.text, fontSize: 28, fontWeight: '700' }}>WatchLine {VERSION}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8 }}>
           {busy && <ActivityIndicator color={colors.accentHi} style={{ marginRight: 8 }} />}
           <Text style={{ color: u.state === 'error' ? colors.danger : colors.dim, fontSize: 15, textAlign: 'center' }}>{message}</Text>
@@ -297,7 +354,7 @@ export function SyncScreen() {
       <View style={{ alignItems: 'center', marginVertical: 18 }}>
         <Ionicons name={sync.enabled ? 'cloud-done' : 'cloud-outline'} size={48} color={sync.enabled ? colors.accentHi : colors.dim} />
         <Text style={{ color: colors.dim, fontSize: 15, textAlign: 'center', marginTop: 10, lineHeight: 21 }}>
-          Keep your library and watch history the same on every device: your Mac, PC and Android phone. WatchList keeps them in a private folder in your Google Drive that only WatchList can see.
+          Keep your library and watch history the same on every device: your Mac, PC and Android phone. WatchLine keeps them in a private folder in your Google Drive that only WatchLine can see.
         </Text>
       </View>
       {sync.enabled ? (
@@ -331,7 +388,7 @@ export function SyncScreen() {
           </Group>
           {error && <Text style={{ color: colors.danger, textAlign: 'center', marginBottom: 14 }}>{error}</Text>}
           {desktop && <Text style={{ color: colors.faint, fontSize: 13, textAlign: 'center' }}>Google’s sign-in opens in your browser. Come back here when it’s done.</Text>}
-          {!googleAvailable() && <Text style={{ color: colors.faint, fontSize: 13, textAlign: 'center', marginTop: 8 }}>This copy of WatchList was built without a Google client, so Sync isn’t available.</Text>}
+          {!googleAvailable() && <Text style={{ color: colors.faint, fontSize: 13, textAlign: 'center', marginTop: 8 }}>This copy of WatchLine was built without a Google client, so Sync isn’t available.</Text>}
         </>
       )}
     </Page>
@@ -356,7 +413,7 @@ export function FeedbackScreen() {
         ]}
       />
       <Text style={{ color: colors.dim, fontSize: 14, marginVertical: 14, lineHeight: 20 }}>
-        {kind === 'bug' ? 'Say what you did, what you expected, and what happened instead. Your WatchList version and device are added for you.' : 'What should WatchList do, and why would it help?'}
+        {kind === 'bug' ? 'Say what you did, what you expected, and what happened instead. Your WatchLine version and device are added for you.' : 'What should WatchLine do, and why would it help?'}
       </Text>
       <Field value={title} onChangeText={setTitle} placeholder={kind === 'bug' ? 'Short summary, e.g. "Up Next skips an episode"' : 'Short summary, e.g. "Widgets"'} style={{ marginBottom: 12 }} />
       <Field value={text} onChangeText={setText} placeholder={kind === 'bug' ? 'What happened' : 'The idea'} multiline style={{ marginBottom: 18, minHeight: 160 }} />
@@ -381,7 +438,7 @@ export function AboutScreen() {
   return (
     <Page header={<Header title="About" />}>
       <View style={{ alignItems: 'center', marginVertical: 18 }}>
-        <Text style={{ color: colors.text, fontSize: 26, fontWeight: '800' }}>WatchList {VERSION}</Text>
+        <Text style={{ color: colors.text, fontSize: 26, fontWeight: '800' }}>WatchLine {VERSION}</Text>
         <Text style={{ color: colors.dim, fontSize: 15, marginTop: 6, textAlign: 'center' }}>Track the shows and movies you watch.</Text>
       </View>
       <SectionLabel>Data sources</SectionLabel>

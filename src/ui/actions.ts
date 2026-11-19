@@ -59,8 +59,8 @@ export function unwatchMovie(movie: MovieDetails | MediaSummary): void {
   unmarkMovie(movie.id)
 }
 
-const STATUSES: Status[] = ['watching', 'planned', 'completed', 'paused', 'dropped']
-const MOVIE_STATUSES: Status[] = ['planned', 'completed']
+const STATUSES: Status[] = ['watching', 'planned', 'completed']
+const MOVIE_STATUSES: Status[] = ['planned', 'later', 'completed']
 
 /** The "where is this in my library" menu. */
 export function chooseStatus(type: MediaType, m: ShowBasics | MovieDetails | MediaSummary, title: string): void {
@@ -70,12 +70,12 @@ export function chooseStatus(type: MediaType, m: ShowBasics | MovieDetails | Med
   showMenu(title, [
     ...(type === 'movie' ? MOVIE_STATUSES : STATUSES).map((s) => ({
       label: labels[s],
-      selected: current?.status === s,
+      selected: current?.status === s || (s === 'planned' && type === 'tv' && (current?.status === 'paused' || current?.status === 'dropped' || current?.status === 'later')),
       onPress: () => {
         if (type === 'movie' && s === 'completed') watchMovie(m as MovieDetails)
-        else if (type === 'movie' && s === 'planned' && current?.status === 'completed') {
+        else if (type === 'movie' && s !== 'completed' && current?.status === 'completed') {
           unmarkMovie(m.id)
-          useStore.getState().setStatus(id, 'planned')
+          useStore.getState().setStatus(id, s)
         } else addToLibrary(type, m, s)
       }
     })),

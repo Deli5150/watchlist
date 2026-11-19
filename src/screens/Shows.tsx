@@ -20,7 +20,7 @@ import { PressableScale } from '../ui/motion'
 import { colors, display } from '../ui/theme'
 import { EpisodeCard } from './Season'
 
-// Shows: the shows pinned to your WatchList (the ones you're watching), the Episode Queue with each
+// Shows: the shows pinned to your Watchlist (the ones you're watching), the Episode Queue with each
 // one's next episodes, what airs this week and new seasons on the way. (Watch Later is in Library.)
 
 interface Row {
@@ -71,7 +71,7 @@ export default function Shows() {
       {!items.length && <Welcome />}
       {pinned.length > 0 && (
         <>
-          <SectionHeader title="WatchList" icon="pin" />
+          <SectionHeader title="Watchlist" icon="pin" />
           <HScroll contentContainerStyle={{ gap: 12 }} style={{ marginBottom: 26 }}>
             {pinned.map((r) => (
               <PinTile key={r.item.id} row={r} />
@@ -114,7 +114,7 @@ export function ScreenTitle({ title }: { title: string }) {
   )
 }
 
-/** A show pinned to your WatchList (one you're watching): episodes left, and where you are. */
+/** A show pinned to your Watchlist (one you're watching): episodes left, and where you are. */
 const PinTile = memo(function PinTile({ row }: { row: Row }) {
   const { item, show, p } = row
   const next = p?.next
@@ -244,25 +244,30 @@ function UpcomingSeasons({ list }: { list: Array<{ item: LibraryItem; show: Show
 }
 
 /** A poster with a caption strip under it (Showline-style tiles). */
+/** Poster tiles' width: smaller on phones, so a row doesn't fill the screen. */
+export const useTileWidth = () => (useWide() ? 170 : 124)
+
 export function PosterTile({ item, sub, extra, badge, right }: { item: LibraryItem; sub?: string; extra?: string; badge?: string; right?: React.ReactNode }) {
   const open = useOpenTitle()
+  const width = useTileWidth()
+  const small = width < 170
   return (
-    <PressableScale onPress={() => open(item.type, item.tmdbId)} style={{ width: 170, backgroundColor: colors.card, borderRadius: 14, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
+    <PressableScale onPress={() => open(item.type, item.tmdbId)} style={{ width, backgroundColor: colors.card, borderRadius: small ? 12 : 14, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
       <View>
-        <Poster path={item.poster} title={item.title} width={170} radius={0} style={{ borderWidth: 0 }} />
+        <Poster path={item.poster} title={item.title} width={width} radius={0} style={{ borderWidth: 0 }} />
         {badge && (
-          <View style={{ position: 'absolute', top: 8, right: 8, minWidth: 34, height: 34, borderRadius: 17, paddingHorizontal: 6, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={display(16, colors.onAccent)}>{badge}</Text>
+          <View style={{ position: 'absolute', top: 6, right: 6, minWidth: small ? 28 : 34, height: small ? 28 : 34, borderRadius: 17, paddingHorizontal: 6, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={display(small ? 14 : 16, colors.onAccent)}>{badge}</Text>
           </View>
         )}
         {right}
       </View>
-      <View style={{ padding: 9, alignItems: 'center' }}>
-        <Text style={display(17)} numberOfLines={1}>
+      <View style={{ padding: small ? 7 : 9, alignItems: 'center' }}>
+        <Text style={display(small ? 15 : 17)} numberOfLines={1}>
           {item.title}
         </Text>
-        {sub ? <Text style={display(15, colors.dim)}>{sub}</Text> : null}
-        {extra ? <Text style={{ color: colors.faint, fontSize: 12, fontWeight: '800', letterSpacing: 0.5 }}>{extra}</Text> : null}
+        {sub ? <Text style={display(small ? 13 : 15, colors.dim)}>{sub}</Text> : null}
+        {extra ? <Text style={{ color: colors.faint, fontSize: small ? 10.5 : 12, fontWeight: '800', letterSpacing: 0.5 }} numberOfLines={1}>{extra}</Text> : null}
       </View>
     </PressableScale>
   )
@@ -273,9 +278,9 @@ function Welcome() {
   return (
     <View style={{ backgroundColor: colors.card, borderRadius: 22, borderWidth: 1, borderColor: colors.border, padding: 24, alignItems: 'center' }}>
       <Ionicons name="tv-outline" size={42} color={colors.accentHi} />
-      <Text style={[display(28), { marginTop: 12 }]}>Welcome to WatchList</Text>
+      <Text style={[display(28), { marginTop: 12 }]}>Welcome to WatchLine</Text>
       <Text style={{ color: colors.dim, fontSize: 15, textAlign: 'center', marginTop: 8, lineHeight: 22, maxWidth: 460 }}>
-        Add the shows and movies you watch. WatchList keeps your place in every show, tells you when new episodes air, and shows where to stream them.
+        Add the shows and movies you watch. WatchLine keeps your place in every show, tells you when new episodes air, and shows where to stream them.
       </Text>
       <View style={{ flexDirection: 'row', gap: 10, marginTop: 18 }}>
         <Pressable onPress={() => setTab('search')} style={({ pressed }) => ({ height: 42, paddingHorizontal: 18, borderRadius: 21, backgroundColor: colors.accent, flexDirection: 'row', alignItems: 'center', opacity: pressed ? 0.8 : 1 })}>

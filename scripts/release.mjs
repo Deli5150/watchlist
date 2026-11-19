@@ -15,15 +15,15 @@ const dist = path.join(root, 'dist')
 
 // The APK is built as app-release.apk; the iPhone .ipa is built into dist/ by scripts/ios.sh.
 const apk = path.join(root, 'android/app/build/outputs/apk/release/app-release.apk')
-if (fs.existsSync(apk)) fs.copyFileSync(apk, path.join(dist, `WatchList-${version}.apk`))
+if (fs.existsSync(apk)) fs.copyFileSync(apk, path.join(dist, `WatchLine-${version}.apk`))
 
 const names = [
-  `WatchList-${version}.dmg`,
-  `WatchList-${version}-mac.zip`,
-  `WatchList-Setup-${version}.exe`,
-  `WatchList-${version}-x86_64.AppImage`,
-  `WatchList-${version}.apk`,
-  `WatchList-${version}.ipa`
+  `WatchLine-${version}.dmg`,
+  `WatchLine-${version}-mac.zip`,
+  `WatchLine-Setup-${version}.exe`,
+  `WatchLine-${version}-x86_64.AppImage`,
+  `WatchLine-${version}.apk`,
+  `WatchLine-${version}.ipa`
 ]
 const files = names.map((n) => path.join(dist, n)).filter((f) => fs.existsSync(f))
 const missing = names.filter((n) => !fs.existsSync(path.join(dist, n)))
@@ -38,5 +38,5 @@ const notes = (next > 0 ? rest.slice(0, next) : rest).split('\n').slice(1).join(
 const notesFile = path.join(os.tmpdir(), `watchlist-${version}-notes.md`)
 fs.writeFileSync(notesFile, notes)
 
-execFileSync('gh', ['release', 'create', `v${version}`, '--title', `WatchList ${version}`, '--notes-file', notesFile, ...files], { cwd: root, stdio: 'inherit' })
+execFileSync('gh', ['release', 'create', `v${version}`, '--title', `WatchLine ${version}`, '--notes-file', notesFile, ...files], { cwd: root, stdio: 'inherit' })
 console.log(`Published v${version}`)

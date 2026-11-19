@@ -23,18 +23,15 @@ type IconName = React.ComponentProps<typeof Ionicons>['name']
 
 const ROWS: Record<MediaType, Array<{ filter: LibraryFilter; label: string; sub: string; icon: IconName; color: string }>> = {
   tv: [
-    { filter: 'watching', label: 'Watching', sub: 'Pinned to your WatchList on Shows', icon: 'pin', color: 'accent' },
+    { filter: 'watching', label: 'Watchlist', sub: 'Pinned to the top of Shows', icon: 'pin', color: 'accent' },
     { filter: 'planned', label: 'Watch Later', sub: 'Set aside for another time', icon: 'time', color: '#d9a441' },
     { filter: 'caughtup', label: 'Caught Up', sub: 'Waiting on new episodes', icon: 'hourglass', color: '#8b8b95' },
     { filter: 'completed', label: 'Finished', sub: 'Shows you finished that have ended', icon: 'checkmark', color: '#8b8b95' },
-    { filter: 'paused', label: 'Paused', sub: 'On hold for now', icon: 'pause', color: '#6f7ad8' },
-    { filter: 'dropped', label: 'Dropped', sub: 'Stopped watching', icon: 'close', color: '#6b6b73' },
-    { filter: 'favorites', label: 'Favorites', sub: 'Shows you love', icon: 'heart', color: '#f06bb5' }
   ],
   movie: [
     { filter: 'planned', label: 'Watchlist', sub: 'Movies you want to see', icon: 'bookmark', color: 'accent' },
-    { filter: 'completed', label: 'Watched', sub: 'Movies you’ve seen', icon: 'checkmark', color: '#8b8b95' },
-    { filter: 'favorites', label: 'Favorites', sub: 'Movies you love', icon: 'heart', color: '#f06bb5' }
+    { filter: 'later', label: 'Watch Later', sub: 'Set aside for another time', icon: 'time', color: '#d9a441' },
+    { filter: 'completed', label: 'Watched', sub: 'Movies you’ve seen', icon: 'checkmark', color: '#8b8b95' }
   ]
 }
 
@@ -43,6 +40,8 @@ function matches(i: LibraryItem, filter: LibraryFilter, p: Progress | null): boo
   if (filter === 'all') return true
   if (filter === 'favorites') return i.favorite
   if (filter === 'caughtup') return i.status === 'watching' && Boolean(p?.caughtUp)
+  // Shows set aside the old ways (Paused, Dropped) count as Watch Later.
+  if (filter === 'planned' && i.type === 'tv') return i.status === 'planned' || i.status === 'later' || i.status === 'paused' || i.status === 'dropped'
   return i.status === filter
 }
 

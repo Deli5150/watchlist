@@ -3,16 +3,18 @@ import { memo, useMemo } from 'react'
 import { Platform, Pressable, ScrollView, Text, View } from 'react-native'
 import { useShallow } from 'zustand/react/shallow'
 import { useAsync } from '../lib/hooks'
+import { useWide } from '../lib/layout'
 import { daysUntil, watchIndex } from '../lib/progress'
 import { useStore } from '../lib/store'
 import { movieBasics, type MovieBasics, type MovieDetails } from '../lib/tmdb'
 import type { LibraryItem } from '../lib/types'
 import { watchMovie } from '../ui/actions'
+import { HScroll } from '../ui/HScroll'
 import { EmptyNote, Page } from '../ui/kit'
 import { Poster, PosterGrid, SectionHeader, useOpenTitle } from '../ui/media'
 import { PressableScale } from '../ui/motion'
 import { colors, display } from '../ui/theme'
-import { PosterTile, ScreenTitle } from './Shows'
+import { PosterTile, ScreenTitle, useTileWidth } from './Shows'
 
 // Movies: your Watchlist (with a check to mark one watched), upcoming releases from your library,
 // and what you watched lately.
@@ -50,6 +52,8 @@ function bucketOf(date: string): string {
 }
 
 export default function Movies() {
+  const wide = useWide()
+  const tile = useTileWidth()
   const { items, watches } = useStore(useShallow((s) => ({ items: s.items, watches: s.watches })))
   const movies = useMemo(() => items.filter((i) => i.type === 'movie'), [items])
   const key = movies.map((m) => m.id).join()
@@ -79,7 +83,16 @@ export default function Movies() {
       {watchlist.length > 0 && (
         <View style={{ marginBottom: 26 }}>
           <SectionHeader title="Watchlist" icon="bookmark" />
-          <PosterGrid items={watchlist} keyOf={(m) => m.id} min={150} render={(m, w) => <MovieCard item={m} info={info[m.tmdbId]} width={w} />} />
+          {wide ? (
+            <PosterGrid items={watchlist} keyOf={(m) => m.id} min={150} render={(m, w) => <MovieCard item={m} info={info[m.tmdbId]} width={w} />} />
+          ) : (
+            // Phones: one row that scrolls sideways, so the watchlist doesn't take over the page.
+            <HScroll contentContainerStyle={{ gap: 12 }}>
+              {watchlist.map((m) => (
+                <MovieCard key={m.id} item={m} info={info[m.tmdbId]} width={tile} />
+              ))}
+            </HScroll>
+          )}
         </View>
       )}
       {groups.size > 0 && (
@@ -126,17 +139,17 @@ const MovieCard = memo(function MovieCard({ item, info, width }: { item: Library
           accessibilityLabel="Mark watched"
           onPress={() => watchMovie({ ...info, id: item.tmdbId, title: item.title, poster_path: item.poster, backdrop_path: item.backdrop } as unknown as MovieDetails)}
           hitSlop={6}
-          style={({ pressed }) => ({ position: 'absolute', top: 8, right: 8, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.75)', borderWidth: 2, borderColor: '#fff', alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}
+          style={({ pressed }) => ({ position: 'absolute', top: 6, right: 6, width: width < 140 ? 32 : 40, height: width < 140 ? 32 : 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.75)', borderWidth: 2, borderColor: '#fff', alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}
         >
           <Ionicons name="checkmark" size={20} color="rgba(255,255,255,0.35)" />
         </Pressable>
       </View>
-      <View style={{ padding: 10, alignItems: 'center' }}>
-        <Text style={display(17)} numberOfLines={1}>
+      <View style={{ padding: width < 140 ? 7 : 10, alignItems: 'center' }}>
+        <Text style={display(width < 140 ? 15 : 17)} numberOfLines={1}>
           {item.title}
         </Text>
-        <Text style={display(14.5, colors.dim)}>{runtimeLabel(info?.runtime)}</Text>
-        <Text style={display(14.5, colors.dim)}>{item.year || '—'}</Text>
+        <Text style={display(width < 140 ? 13 : 14.5, colors.dim)}>{runtimeLabel(info?.runtime)}</Text>
+        <Text style={display(width < 140 ? 13 : 14.5, colors.dim)}>{item.year || '—'}</Text>
       </View>
     </PressableScale>
   )

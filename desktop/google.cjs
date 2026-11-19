@@ -48,7 +48,7 @@ async function tokenRequest(params) {
 }
 
 function resultPage(ok) {
-  const [title, text] = ok ? ['WatchList Sync is on', 'You can close this tab and go back to WatchList.'] : ['Sign-in didn’t finish', 'You can close this tab and try again from WatchList.']
+  const [title, text] = ok ? ['WatchLine Sync is on', 'You can close this tab and go back to WatchLine.'] : ['Sign-in didn’t finish', 'You can close this tab and try again from WatchLine.']
   return `<!doctype html><meta charset="utf-8"><title>${title}</title><style>body{font:15px/1.5 -apple-system,"Segoe UI",system-ui,sans-serif;display:grid;place-items:center;height:100vh;margin:0;background:#07060c;color:#eee}main{text-align:center;padding:2rem}h1{font-size:20px;margin:0 0 .5rem;color:#a99cff}p{color:#aaa;margin:0}</style><main><h1>${title}</h1><p>${text}</p></main>`
 }
 
@@ -81,7 +81,7 @@ function receiveCode(open, state) {
 }
 
 async function signIn() {
-  if (!client.clientId) throw new Error('Sync isn’t set up in this copy of WatchList (no Google client).')
+  if (!client.clientId) throw new Error('Sync isn’t set up in this copy of WatchLine (no Google client).')
   const verifier = crypto.randomBytes(48).toString('base64url')
   const challenge = crypto.createHash('sha256').update(verifier).digest('base64url')
   const state = crypto.randomBytes(16).toString('base64url')
@@ -102,7 +102,7 @@ async function signIn() {
   }, state)
   const tokens = await tokenRequest({ code, code_verifier: verifier, grant_type: 'authorization_code', redirect_uri: redirectUri })
   if (!tokens.refresh_token) throw new Error('Google didn’t allow offline access. Try again.')
-  if (!String(tokens.scope ?? '').includes(SCOPE)) throw new Error('WatchList needs access to its Drive folder to sync. Try again and leave the box ticked.')
+  if (!String(tokens.scope ?? '').includes(SCOPE)) throw new Error('WatchLine needs access to its Drive folder to sync. Try again and leave the box ticked.')
   saveRefresh(tokens.refresh_token)
   access = { token: tokens.access_token, expiresAt: Date.now() + (tokens.expires_in ?? 3600) * 1000 }
   const about = await authFetch('https://www.googleapis.com/drive/v3/about?fields=user(emailAddress)', {}).catch(() => null)

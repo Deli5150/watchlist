@@ -14,7 +14,7 @@ import { desktop } from './storage'
 
 const CHECK_EVERY_MS = 6 * 60 * 60_000
 const KIND: 'desktop' | 'android' | 'ios' | 'none' = desktop ? 'desktop' : Platform.OS === 'android' && WatchlistUpdater ? 'android' : Platform.OS === 'ios' ? 'ios' : 'none'
-const PATTERN = KIND === 'android' ? /^WatchList-[\d.]+\.apk$/ : KIND === 'ios' ? /^WatchList-[\d.]+\.ipa$/ : null
+const PATTERN = KIND === 'android' ? /^WatchLine-[\d.]+\.apk$/ : KIND === 'ios' ? /^WatchLine-[\d.]+\.ipa$/ : null
 
 export const useUpdate = create<UpdateStatus>(() => ({ current: VERSION, state: 'idle', inApp: KIND !== 'none' }))
 
@@ -82,7 +82,7 @@ export async function installUpdate(): Promise<void> {
   if (!WatchlistUpdater) return
   if (!WatchlistUpdater.canInstall()) {
     WatchlistUpdater.openInstallSettings()
-    set({ error: 'Allow “Install unknown apps” for WatchList, then come back and tap Install again.' })
+    set({ error: 'Allow “Install unknown apps” for WatchLine, then come back and tap Install again.' })
     return
   }
   if (!WatchlistUpdater.install(downloaded)) set({ state: 'error', error: 'The downloaded update is gone. Download it again.' })

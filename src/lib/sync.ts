@@ -1,8 +1,8 @@
 import { create } from 'zustand'
 import type { AppData, Settings } from './types'
 
-// "Sync with Google": WatchList's data kept in one JSON file in the user's own Google Drive app folder
-// (scope drive.appdata, a hidden folder only WatchList can read), shared by every device. Each
+// "Sync with Google": WatchLine's data kept in one JSON file in the user's own Google Drive app folder
+// (scope drive.appdata, a hidden folder only WatchLine can read), shared by every device. Each
 // library title, each watched episode or movie, and each synced setting is an entry with the time it
 // last changed; the newest wins, and deletions are remembered (with their time) so a delete on
 // one device reaches the others. So changes made on different devices to different things all survive.

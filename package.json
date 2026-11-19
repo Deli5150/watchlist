@@ -1,7 +1,7 @@
 {
   "name": "watchlist",
   "version": "1.0.0",
-  "description": "WatchList — track the shows and movies you watch, for macOS, Windows and Android",
+  "description": "WatchLine — track the shows and movies you watch, for macOS, Windows and Android",
   "main": "index.ts",
   "dependencies": {
     "@expo-google-fonts/barlow-semi-condensed": "^0.4.1",
@@ -23,6 +23,7 @@
     "expo-linking": "~58.0.17",
     "expo-localization": "~58.0.5",
     "expo-notifications": "~58.1.9",
+    "expo-screen-orientation": "~58.0.4",
     "expo-sharing": "~58.0.23",
     "expo-status-bar": "~58.0.5",
     "expo-system-ui": "~58.0.7",

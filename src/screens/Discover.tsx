@@ -177,7 +177,7 @@ export function ErrorNote({ message, onRetry }: { message: string; onRetry?: () 
 export function NoKey() {
   return (
     <Page>
-      <EmptyNote>{'This copy of WatchList was built without a TMDB API key, so it can’t look up shows and movies.\nAdd EXPO_PUBLIC_TMDB_KEY to .env and rebuild (README → TMDB).'}</EmptyNote>
+      <EmptyNote>{'This copy of WatchLine was built without a TMDB API key, so it can’t look up shows and movies.\nAdd EXPO_PUBLIC_TMDB_KEY to .env and rebuild (README → TMDB).'}</EmptyNote>
     </Page>
   )
 }

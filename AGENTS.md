@@ -1,4 +1,4 @@
-# WatchList
+# WatchLine
 
 Show and movie tracker (inspired by the iOS app Showline) for macOS and Windows; Android next.
 Bootstrapped from OnTrack (~/OnTrack): same stack, updater, sync and release tooling.
@@ -23,17 +23,24 @@ See README.md for features and build commands.
   `src/lib/updater.ts`. Phones use `src/ui/UpdatePrompt.tsx` (Apollo-style sheet).
 - Themes: `colors` in `src/ui/theme.ts` is one mutable object; App re-keys on theme change. Use
   `colors.*`; text on `colors.accent` uses `colors.onAccent`.
-- Look: a merge of Showline's design and WatchList's own (user's request, 2026-11-18): condensed
+- Look: a merge of Showline's design and WatchLine's own (user's request, 2026-11-18): condensed
   headings in Barlow Semi Condensed (`display()` in theme.ts, loaded in App.tsx), uppercase
   `SectionHeader`s with icons, title pages = banner fading into the page with the cover art at its bottom-left
   (user preferred this to Showline's logo hero), then Details | Progress | Cast & Crew (Season.tsx is the Progress panel; there is no Season route). Shows starts with
-  the pinned WatchList row (watching shows; `HScroll` = mouse wheel scrolls it sideways). Keep the
-  Cinema accent and the desktop sidebar as WatchList's own.
+  the pinned Watchlist row (watching shows; `HScroll` = mouse wheel scrolls it sideways). Keep the
+  Cinema accent and the desktop sidebar as WatchLine's own.
 - Layout: `useWide()` (web ≥860px) = sidebar (Shows, Movies, Library, Calendar, Discover, Search,
   History, Settings); phones get the floating TabBar (Shows, Movies, Library, Discover + a round
   Search button); Calendar/History/Settings open from `ScreenTitle`'s buttons.
-- Library labels: shows planned = "Watch Later", movies planned = "Watchlist"; "Caught Up" is
-  computed (watching + every aired episode watched).
+- Library (user's request, 2026-11-19): shows = Watchlist (watching), Watch Later (planned; old
+  paused/dropped count here), Caught Up (computed: watching + every aired episode watched),
+  Finished; movies = Watchlist (planned), Watch Later (`later`), Watched. No Paused/Dropped/Favorites rows.
+- Named WatchLine (renamed from WatchList 2026-11-19). Internal ids keep "watchlist" (bundle id,
+  storage keys, `WATCHLIST_*` env vars, repo Deli5150/watchlist); desktop keeps the old
+  `WatchList` data folder (main.cjs). "Watchlist" is also the name of the pinned-shows feature.
+- Wallpapers: `src/lib/wallpaper.ts` (built-ins drawn by `scripts/render-wallpapers.cjs`, or your
+  own: desktop `userData/wallpaper.txt`, phones a file in documents), drawn by `Backdrop` in kit.tsx.
+- Phone trailers: full-screen player, Back closes it, orientation unlocked while open (expo-screen-orientation).
 
 ## Before finishing a change
 

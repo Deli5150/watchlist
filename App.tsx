@@ -40,7 +40,7 @@ const nav = createNavigationContainerRef<RootParams>()
 if (__DEV__ && typeof globalThis !== 'undefined') {
   ;(globalThis as { __watchlistPreviewUpdate?: (iphone: boolean) => void }).__watchlistPreviewUpdate = (iphone) => {
     useUpdatePrompt.setState({ forceChooser: iphone })
-    useUpdate.setState({ state: 'available', version: '1.1.0', notes: '## What’s new\n- A preview of the update sheet', assetUrl: 'https://github.com/Deli5150/watchlist/releases/download/v1.1.0/WatchList-1.1.0.ipa' })
+    useUpdate.setState({ state: 'available', version: '1.1.0', notes: '## What’s new\n- A preview of the update sheet', assetUrl: 'https://github.com/Deli5150/watchlist/releases/download/v1.1.0/WatchLine-1.1.0.ipa' })
   }
 }
 

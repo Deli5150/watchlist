@@ -14,6 +14,10 @@ contextBridge.exposeInMainWorld('watchlist', {
     set: (key, json) => ipcRenderer.invoke('cache:set', key, json),
     clear: () => ipcRenderer.invoke('cache:clear')
   },
+  wallpaper: {
+    get: () => ipcRenderer.invoke('wallpaper:get'),
+    set: (dataUrl) => ipcRenderer.invoke('wallpaper:set', dataUrl)
+  },
   openExternal: (url) => ipcRenderer.send('open-external', url),
   google: {
     configured: ipcRenderer.sendSync('google:configured'),
