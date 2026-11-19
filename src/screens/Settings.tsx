@@ -13,7 +13,7 @@ import { showMenu } from '../ui/overlays'
 import { colors, display, THEMES } from '../ui/theme'
 import { VERSION } from '../version'
 import { Wordmark } from '../ui/Sidebar'
-import { regionName } from './more'
+import { regionName } from '../lib/region'
 
 export const openUrl = (url: string): void => {
   if (desktop) desktop.openExternal(url)

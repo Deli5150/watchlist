@@ -56,16 +56,6 @@ export function AppearanceScreen() {
 
 // ── Region and language ─────────────────────────────────────────────────────────────────────────
 
-let regionNames: Intl.DisplayNames | null = null
-export function regionName(code: string): string {
-  try {
-    regionNames ??= new Intl.DisplayNames(['en'], { type: 'region' })
-    return regionNames.of(code) ?? code
-  } catch {
-    return code
-  }
-}
-
 export function RegionScreen() {
   const { region, setSettings } = useStore(useShallow((s) => ({ region: s.settings.region, setSettings: s.setSettings })))
   const [query, setQuery] = useState('')

@@ -25,7 +25,7 @@ Track the shows and movies you watch — inspired by the iOS app Showline. For *
 
 ### Android
 
-<img src="docs/screenshots/android-discover.png" width="300" alt="Discover on Android">
+<img src="docs/screenshots/android-shows.png" width="24%" alt="Shows on Android"> <img src="docs/screenshots/android-title.png" width="24%" alt="Show page on Android"> <img src="docs/screenshots/android-library.png" width="24%" alt="Library on Android"> <img src="docs/screenshots/android-discover.png" width="24%" alt="Discover on Android">
 
 ## Data sources
 
@@ -55,6 +55,7 @@ Google Cloud project "WatchList", scope `drive.appdata` (+ email). Desktop OAuth
 
 ```sh
 npm run dist:desktop    # dist/: WatchList-<v>.dmg, WatchList-<v>-mac.zip, WatchList-Setup-<v>.exe
+npx expo prebuild --platform android && npm run dist:android   # APK (release key: credentials/, passwords in ~/.gradle/gradle.properties)
 npm run release         # GitHub release for package.json's version, notes from CHANGELOG.md
 ```
 
