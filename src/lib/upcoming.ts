@@ -4,8 +4,8 @@ import { useStore } from './store'
 import { season, tmdb, type EpisodeRef, type ShowBasics } from './tmdb'
 import type { LibraryItem } from './types'
 
-// What's coming up for the titles in your library: episodes of the shows you follow and movies on
-// your Watchlist. Used by the Calendar and the desktop's new-episode alerts.
+// What's coming up for the titles in your library: episodes of the shows you follow and the
+// release dates of your movies. Used by the Calendar and the desktop's new-episode alerts.
 
 export interface UpcomingEpisode {
   kind: 'episode'
@@ -25,18 +25,18 @@ export type Upcoming = UpcomingEpisode | UpcomingMovie
 /** Shows that count: everything but dropped. */
 const follows = (i: LibraryItem) => i.type === 'tv' && i.status !== 'dropped'
 
-export async function upcomingEpisodes(items: LibraryItem[], shows: Record<number, ShowBasics>, from = addDays(today(), -7), days = 120): Promise<UpcomingEpisode[]> {
-  const until = addDays(today(), days)
+/** Episodes airing from `from` to `until` (YYYY-MM-DD, inclusive) of the shows you follow. */
+export async function upcomingEpisodes(items: LibraryItem[], shows: Record<number, ShowBasics>, from = addDays(today(), -7), until = addDays(today(), 120)): Promise<UpcomingEpisode[]> {
   const out: UpcomingEpisode[] = []
   await Promise.all(
     items.filter(follows).map(async (item) => {
       const show = shows[item.tmdbId]
       const next = show?.next_episode_to_air
       const last = show?.last_episode_to_air
-      // The season airing now (for the past week) and the next one, if different.
+      // The season airing now and the next one, if different (earlier seasons are long past).
       const numbers = new Set<number>()
       if (next) numbers.add(next.season_number)
-      if (last && last.air_date && last.air_date >= from) numbers.add(last.season_number)
+      if (last && last.air_date && last.air_date >= addDays(from, -60)) numbers.add(last.season_number)
       for (const n of numbers) {
         try {
           const s = await season(item.tmdbId, n, 6 * 3600_000)
@@ -48,15 +48,15 @@ export async function upcomingEpisodes(items: LibraryItem[], shows: Record<numbe
   return out.sort((a, b) => a.date.localeCompare(b.date) || a.item.title.localeCompare(b.item.title) || a.episode.episode_number - b.episode.episode_number)
 }
 
-export async function upcomingMovies(items: LibraryItem[], from = addDays(today(), -7)): Promise<UpcomingMovie[]> {
+export async function upcomingMovies(items: LibraryItem[], from = addDays(today(), -7), until = addDays(today(), 365)): Promise<UpcomingMovie[]> {
   const out: UpcomingMovie[] = []
   await Promise.all(
     items
-      .filter((i) => i.type === 'movie' && i.status === 'planned' && (!i.year || Number(i.year) >= new Date().getFullYear() - 1))
+      .filter((i) => i.type === 'movie' && i.status !== 'dropped' && (!i.year || Number(i.year) >= Number(from.slice(0, 4)) - 1))
       .map(async (item) => {
         try {
           const m = await tmdb<{ release_date: string | null }>(`/movie/${item.tmdbId}`, {}, 24 * 3600_000)
-          if (m.release_date && m.release_date >= from) out.push({ kind: 'movie', date: m.release_date, item })
+          if (m.release_date && m.release_date >= from && m.release_date <= until) out.push({ kind: 'movie', date: m.release_date, item })
         } catch {}
       })
   )
@@ -72,7 +72,7 @@ export async function scheduleAlerts(shows: Record<number, ShowBasics>): Promise
     items.filter((i) => i.status === 'watching' || i.status === 'planned' || i.status === 'completed'),
     shows,
     today(),
-    30
+    addDays(today(), 30)
   )
   desktop.setReminders(
     eps.map((u) => {

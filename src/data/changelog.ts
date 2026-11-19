@@ -8,7 +8,7 @@ export const CHANGELOG: Array<{ version: string; date: string; items: string[] }
       'Library of shows and movies by status: Watching, Watchlist, Finished, Paused, Dropped',
       'Show pages with progress, seasons, cast, where to watch, trailers and more like it',
       'Episode Scorecard: every episode’s rating in a season-by-season grid',
-      'Calendar of new episodes and movie releases, with new-episode alerts',
+      'Calendar of new episodes and movie releases as a list, a week or a month, with new-episode alerts',
       'History with watch time by month',
       'Discover what’s trending, popular, airing and coming soon',
       'Sync with Google across your devices',

@@ -6,7 +6,7 @@ Track the shows and movies you watch — inspired by the iOS app Showline. For *
 - **Library** — shows and movies by status: Watching, Watchlist, Finished, Paused, Dropped, plus Favorites, your ratings and sorting.
 - **Show and movie pages** — backdrop, progress, seasons and episodes, skippable seasons, cast, where to watch in your region, trailer, collections and recommendations.
 - **Scorecard** — every episode's rating in a season-by-season grid.
-- **Calendar** — new episodes and Watchlist movie releases, by day, with desktop new-episode alerts.
+- **Calendar** — new episodes and movie releases as a list, a week or a month, with desktop new-episode alerts.
 - **History** — watch time, episodes, shows and movies by year, a monthly chart, and editable watch dates.
 - **Discover and Search** — trending, popular, airing today, in theaters, coming soon, top rated, genres; search shows, movies and people.
 - **Sync with Google** — your library and history in a private Google Drive app folder, merged per item across devices.

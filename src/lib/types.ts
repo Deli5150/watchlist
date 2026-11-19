@@ -50,6 +50,8 @@ export interface Settings {
   notifications: boolean
   checkUpdates: boolean
   librarySort: LibrarySort
+  /** Calendar: a list of what's coming, or a week or month at a time. */
+  calendarView: 'list' | 'week' | 'month'
   /** Library: Shows or Movies. */
   libraryType: MediaType
   /** Ask before marking earlier episodes too. */

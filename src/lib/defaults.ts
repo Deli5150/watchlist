@@ -39,6 +39,7 @@ export const DEFAULT_SETTINGS: Settings = {
   checkUpdates: true,
   librarySort: 'recent',
   libraryType: 'tv',
+  calendarView: 'list',
   markPrevious: 'ask',
   lastSeenVersion: '',
   skippedVersion: '',

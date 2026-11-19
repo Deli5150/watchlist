@@ -9,7 +9,7 @@ First release.
 - Show and movie pages: progress, seasons, cast, where to watch, collections, more like this
 - Trailers and clips play in the app, with Open in YouTube
 - Episode Scorecard
-- Calendar of new episodes and movie releases, with new-episode alerts on desktop
+- Calendar of new episodes and movie releases: list, week and month views, with new-episode alerts on desktop
 - History with watch time by month
 - Discover and Search
 - Sync with Google
