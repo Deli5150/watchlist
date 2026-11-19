@@ -21,7 +21,7 @@ import { colors, display } from '../ui/theme'
 import { EpisodeCard } from './Season'
 
 // Shows: the shows pinned to your WatchList (the ones you're watching), the Episode Queue with each
-// one's next episodes, what airs this week, new seasons on the way, and what you've set aside for later.
+// one's next episodes, what airs this week and new seasons on the way. (Watch Later is in Library.)
 
 interface Row {
   item: LibraryItem
@@ -40,7 +40,7 @@ export default function Shows() {
     void refreshLibrary()
   }, [items.length])
 
-  const { pinned, queue, later, seasons } = useMemo(() => {
+  const { pinned, queue, seasons } = useMemo(() => {
     const idx = watchIndex(watches)
     const rows: Row[] = items
       .filter((i) => i.type === 'tv' && i.status === 'watching')
@@ -58,7 +58,6 @@ export default function Shows() {
     return {
       pinned: rows,
       queue: rows.filter((r) => !r.p || r.p.next),
-      later: items.filter((i) => i.type === 'tv' && i.status === 'planned').sort((a, b) => b.statusAt - a.statusAt),
       seasons
     }
   }, [items, watches, shows])
@@ -92,17 +91,7 @@ export default function Shows() {
       )}
       {(week.data?.length ?? 0) > 0 && <WeekStrip list={week.data!} />}
       {seasons.length > 0 && <UpcomingSeasons list={seasons} />}
-      {later.length > 0 && (
-        <>
-          <SectionHeader title="Watch Later" icon="time" iconColor="#d9a441" />
-          <ScrollView horizontal showsHorizontalScrollIndicator={Platform.OS === 'web'} contentContainerStyle={{ gap: 12, paddingBottom: Platform.OS === 'web' ? 10 : 0 }} style={{ marginBottom: 26 }}>
-            {later.map((i) => (
-              <PosterTile key={i.id} item={i} badge={shows[i.tmdbId] ? String(shows[i.tmdbId].number_of_episodes) : undefined} sub={shows[i.tmdbId] ? `${shows[i.tmdbId].number_of_seasons} ${shows[i.tmdbId].number_of_seasons === 1 ? 'SEASON' : 'SEASONS'}` : i.year} />
-            ))}
-          </ScrollView>
-        </>
-      )}
-      {items.length > 0 && !queue.length && !later.length && <Text style={{ color: colors.dim, fontSize: 15, lineHeight: 22 }}>You’re all caught up. Find something new in Discover.</Text>}
+      {items.length > 0 && !queue.length && <Text style={{ color: colors.dim, fontSize: 15, lineHeight: 22 }}>You’re all caught up. Find something new in Discover.</Text>}
     </Page>
   )
 }
