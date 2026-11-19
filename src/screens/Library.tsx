@@ -23,7 +23,7 @@ type IconName = React.ComponentProps<typeof Ionicons>['name']
 
 const ROWS: Record<MediaType, Array<{ filter: LibraryFilter; label: string; sub: string; icon: IconName; color: string }>> = {
   tv: [
-    { filter: 'watching', label: 'Watching', sub: 'In your Up Next', icon: 'play', color: 'accent' },
+    { filter: 'watching', label: 'Watching', sub: 'Pinned to your WatchList on Shows', icon: 'pin', color: 'accent' },
     { filter: 'planned', label: 'Watch Later', sub: 'Set aside for another time', icon: 'time', color: '#d9a441' },
     { filter: 'caughtup', label: 'Caught Up', sub: 'Waiting on new episodes', icon: 'hourglass', color: '#8b8b95' },
     { filter: 'completed', label: 'Finished', sub: 'Shows you finished that have ended', icon: 'checkmark', color: '#8b8b95' },

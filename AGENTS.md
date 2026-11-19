@@ -25,9 +25,10 @@ See README.md for features and build commands.
   `colors.*`; text on `colors.accent` uses `colors.onAccent`.
 - Look: a merge of Showline's design and WatchList's own (user's request, 2026-11-18): condensed
   headings in Barlow Semi Condensed (`display()` in theme.ts, loaded in App.tsx), uppercase
-  `SectionHeader`s with icons, title pages = backdrop + logo + star pill, then a panel with Details |
-  Progress | Cast & Crew (Season.tsx is the Progress panel; there is no Season route). Keep the
-  Cinema accent, the episode-still Up Next cards and the desktop sidebar as WatchList's own.
+  `SectionHeader`s with icons, title pages = banner fading into the page with the cover art at its bottom-left
+  (user preferred this to Showline's logo hero), then Details | Progress | Cast & Crew (Season.tsx is the Progress panel; there is no Season route). Shows starts with
+  the pinned WatchList row (watching shows; `HScroll` = mouse wheel scrolls it sideways). Keep the
+  Cinema accent and the desktop sidebar as WatchList's own.
 - Layout: `useWide()` (web ≥860px) = sidebar (Shows, Movies, Library, Calendar, Discover, Search,
   History, Settings); phones get the floating TabBar (Shows, Movies, Library, Discover + a round
   Search button); Calendar/History/Settings open from `ScreenTitle`'s buttons.

@@ -1,27 +1,27 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Image } from 'expo-image'
 import { memo, useEffect, useMemo, useState } from 'react'
-import { Platform, Pressable, ScrollView, Text, View } from 'react-native'
+import { ActivityIndicator, Platform, Pressable, ScrollView, Text, View } from 'react-native'
 import { useShallow } from 'zustand/react/shallow'
 import { addDays, today, toDate } from '../lib/dates'
-import { useAsync, useSeason } from '../lib/hooks'
+import { useAsync } from '../lib/hooks'
 import { useTab, useWide } from '../lib/layout'
 import { refreshLibrary, useShows } from '../lib/library'
 import { daysUntil, epKey, showProgress, watchIndex, type Progress } from '../lib/progress'
 import { useStore } from '../lib/store'
-import { img, type ShowBasics } from '../lib/tmdb'
+import { img, seasons as fetchSeasons, type ShowBasics } from '../lib/tmdb'
 import type { LibraryItem } from '../lib/types'
 import { upcomingEpisodes, type UpcomingEpisode } from '../lib/upcoming'
 import { useRootNav } from '../nav'
-import { watchEpisode } from '../ui/actions'
 import { CircleButton, Page } from '../ui/kit'
-import { Poster, ProgressBar, ProgressRing, SectionHeader, Still, useOpenTitle } from '../ui/media'
+import { HScroll } from '../ui/HScroll'
+import { Poster, ProgressRing, SectionHeader, useOpenTitle } from '../ui/media'
 import { PressableScale } from '../ui/motion'
 import { colors, display } from '../ui/theme'
 import { EpisodeCard } from './Season'
 
-// Shows: the next episode of everything you're watching (big cards, then the Episode Queue), what
-// airs this week, new seasons on the way, and the shows you've set aside to watch later.
+// Shows: the shows pinned to your WatchList (the ones you're watching), the Episode Queue with each
+// one's next episodes, what airs this week, new seasons on the way, and what you've set aside for later.
 
 interface Row {
   item: LibraryItem
@@ -40,7 +40,7 @@ export default function Shows() {
     void refreshLibrary()
   }, [items.length])
 
-  const { queue, later, seasons } = useMemo(() => {
+  const { pinned, queue, later, seasons } = useMemo(() => {
     const idx = watchIndex(watches)
     const rows: Row[] = items
       .filter((i) => i.type === 'tv' && i.status === 'watching')
@@ -56,6 +56,7 @@ export default function Shows() {
       .filter(({ show }) => (show.next_episode_to_air ? show.next_episode_to_air.episode_number === 1 : show.status === 'Returning Series'))
       .sort((a, b) => (a.show.next_episode_to_air?.air_date ?? '9999').localeCompare(b.show.next_episode_to_air?.air_date ?? '9999'))
     return {
+      pinned: rows,
       queue: rows.filter((r) => !r.p || r.p.next),
       later: items.filter((i) => i.type === 'tv' && i.status === 'planned').sort((a, b) => b.statusAt - a.statusAt),
       seasons
@@ -69,14 +70,18 @@ export default function Shows() {
     <Page wide bottomSpace={120}>
       <ScreenTitle title="Shows" />
       {!items.length && <Welcome />}
+      {pinned.length > 0 && (
+        <>
+          <SectionHeader title="WatchList" icon="pin" />
+          <HScroll contentContainerStyle={{ gap: 12 }} style={{ marginBottom: 26 }}>
+            {pinned.map((r) => (
+              <PinTile key={r.item.id} row={r} />
+            ))}
+          </HScroll>
+        </>
+      )}
       {queue.length > 0 && (
         <>
-          <SectionHeader title="Up Next" icon="play-circle" />
-          <ScrollView horizontal showsHorizontalScrollIndicator={Platform.OS === 'web'} contentContainerStyle={{ gap: 14, paddingBottom: Platform.OS === 'web' ? 10 : 0 }} style={{ marginBottom: 26 }}>
-            {queue.slice(0, 12).map((r) => (
-              <NextCard key={r.item.id} row={r} width={340} />
-            ))}
-          </ScrollView>
           <SectionHeader title="Episode Queue" icon="list" />
           <View style={{ marginBottom: 26 }}>
             {queue.map((r) => (
@@ -120,51 +125,19 @@ export function ScreenTitle({ title }: { title: string }) {
   )
 }
 
-/** The next episode of a show you're watching, on its still, with a button to mark it watched. */
-const NextCard = memo(function NextCard({ row, width }: { row: Row; width: number }) {
+/** A show pinned to your WatchList (one you're watching): episodes left, and where you are. */
+const PinTile = memo(function PinTile({ row }: { row: Row }) {
   const { item, show, p } = row
-  const open = useOpenTitle()
-  const n = p?.next
-  const season = useSeason(n ? item.tmdbId : undefined, n?.season)
-  const ep = season?.episodes.find((e) => e.episode_number === n?.episode)
-  const fresh = ep?.air_date ? daysUntil(ep.air_date) >= -7 : false
+  const next = p?.next
+  const upcoming = show?.next_episode_to_air
+  const caughtUp = Boolean(p?.caughtUp)
   return (
-    <PressableScale onPress={() => open('tv', item.tmdbId)} style={{ width }}>
-      <Still path={ep?.still_path ?? item.backdrop} style={{ borderRadius: 16, borderWidth: 1, borderColor: colors.border }}>
-        <View style={{ position: 'absolute', left: 14, right: 14, bottom: 12, flexDirection: 'row', alignItems: 'flex-end' }}>
-          <View style={{ flex: 1, marginRight: 10 }}>
-            {fresh && (
-              <View style={{ alignSelf: 'flex-start', backgroundColor: '#e5484d', borderRadius: 9, paddingHorizontal: 7, height: 18, justifyContent: 'center', marginBottom: 6 }}>
-                <Text style={{ color: '#fff', fontSize: 10, fontWeight: '900', letterSpacing: 0.6 }}>NEW</Text>
-              </View>
-            )}
-            <Text style={display(21, '#fff')} numberOfLines={1}>
-              {item.title}
-            </Text>
-            <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12, fontWeight: '800', letterSpacing: 0.5, marginTop: 1 }} numberOfLines={1}>
-              {n ? `SEASON ${n.season}  •  EPISODE ${n.episode}` : 'LOADING…'}
-              {ep?.name ? <Text style={{ fontWeight: '500', letterSpacing: 0 }}>{`  ${ep.name}`}</Text> : null}
-            </Text>
-            {p && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8 }}>
-                <ProgressBar value={p.total ? p.watched / p.total : 0} style={{ flex: 1 }} track="rgba(255,255,255,0.25)" />
-                <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, marginLeft: 8, fontWeight: '700' }}>{`${p.left} left`}</Text>
-              </View>
-            )}
-          </View>
-          {show && n && (
-            <Pressable
-              accessibilityLabel="Mark watched"
-              onPress={() => watchEpisode(show, n, ep?.runtime)}
-              hitSlop={6}
-              style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, backgroundColor: pressed ? colors.accentHi : colors.accent, alignItems: 'center', justifyContent: 'center' })}
-            >
-              <Ionicons name="checkmark" size={24} color={colors.onAccent} />
-            </Pressable>
-          )}
-        </View>
-      </Still>
-    </PressableScale>
+    <PosterTile
+      item={item}
+      badge={p ? (caughtUp ? '✓' : String(p.left)) : undefined}
+      sub={next ? `SEASON ${String(next.season).padStart(2, '0')}` : caughtUp ? 'CAUGHT UP' : '—'}
+      extra={next ? `EPISODE ${next.episode}` : upcoming?.air_date ? `NEXT ${daysUntil(upcoming.air_date) <= 0 ? 'TODAY' : `IN ${daysUntil(upcoming.air_date)} DAYS`}` : caughtUp ? 'NO NEW EPISODES YET' : undefined}
+    />
   )
 })
 
@@ -174,10 +147,11 @@ const QueueRow = memo(function QueueRow({ row }: { row: Row }) {
   const nav = useRootNav()
   const { item, show, p } = row
   const n = p?.next
-  const season = useSeason(open && n ? item.tmdbId : undefined, n?.season)
+  // When open: every episode from the next one on (the rest of this season and the later ones).
+  const numbers = open && show && n ? show.seasons.filter((x) => x.season_number >= n.season && x.season_number > 0 && !item.skippedSeasons.includes(x.season_number)).map((x) => x.season_number) : []
+  const res = useAsync(() => (numbers.length ? fetchSeasons(item.tmdbId, numbers) : Promise.resolve([])), [item.tmdbId, numbers.join()])
   const watched = useStore((s) => watchIndex(s.watches).episodes.get(item.id))
-  const nextEps = (season?.episodes ?? []).filter((e) => n && e.episode_number >= n.episode).slice(0, 3)
-  const more = p ? p.left - nextEps.length : 0
+  const nextEps = (res.data ?? []).flatMap((x) => x.episodes).filter((e) => n && (e.season_number > n.season || e.episode_number >= n.episode))
   return (
     <View style={{ backgroundColor: colors.card, borderRadius: 14, borderWidth: open ? 2 : 1, borderColor: open ? colors.accent : colors.border, marginBottom: 10, overflow: 'hidden' }}>
       <Pressable onPress={() => setOpen(!open)} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', padding: 10, opacity: pressed ? 0.8 : 1 })}>
@@ -192,10 +166,20 @@ const QueueRow = memo(function QueueRow({ row }: { row: Row }) {
       </Pressable>
       {open && show && (
         <View style={{ paddingHorizontal: 10, paddingBottom: 10 }}>
-          {nextEps.map((e) => (
-            <EpisodeCard key={e.id} show={show} e={e} watch={watched?.get(epKey(e.season_number, e.episode_number))} isNext={e.episode_number === n?.episode} />
-          ))}
-          {more > 0 && <Text style={{ color: colors.dim, textAlign: 'center', fontSize: 13, marginVertical: 6 }}>{`+${more} more ${more === 1 ? 'episode' : 'episodes'}…`}</Text>}
+          {!res.data && <ActivityIndicator color={colors.accentHi} style={{ marginVertical: 16 }} />}
+          {res.data && (
+            <ScrollView nestedScrollEnabled style={{ maxHeight: 360 }} contentContainerStyle={{ paddingRight: 4 }}>
+              {nextEps.map((e, i) => (
+                <View key={e.id}>
+                  {(i === 0 || e.season_number !== nextEps[i - 1].season_number) && (
+                    <Text style={{ color: colors.dim, fontSize: 12, fontWeight: '800', letterSpacing: 1, marginTop: i ? 10 : 0, marginBottom: 6 }}>{`SEASON ${e.season_number}`}</Text>
+                  )}
+                  <EpisodeCard show={show} e={e} watch={watched?.get(epKey(e.season_number, e.episode_number))} isNext={e.season_number === n?.season && e.episode_number === n?.episode} />
+                </View>
+              ))}
+            </ScrollView>
+          )}
+          {nextEps.length > 4 && <Text style={{ color: colors.faint, textAlign: 'center', fontSize: 12, marginTop: 6 }}>{`${nextEps.length} episodes · scroll for more`}</Text>}
           <Pressable onPress={() => nav.push('Title', { type: 'tv', id: item.tmdbId, tab: 'progress' })} style={({ pressed }) => ({ height: 46, borderRadius: 12, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', marginTop: 4, opacity: pressed ? 0.7 : 1 })}>
             <Text style={display(19, colors.accentHi)}>View Show</Text>
             <Ionicons name="arrow-forward" size={17} color={colors.accentHi} style={{ marginLeft: 6 }} />

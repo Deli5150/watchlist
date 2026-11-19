@@ -14,7 +14,6 @@ import { useStore } from '../lib/store'
 import {
   currentRegion,
   img,
-  logoOf,
   movieDetails,
   showDetails,
   trailerOf,
@@ -31,7 +30,7 @@ import type { LibraryItem, MediaType } from '../lib/types'
 import { useRootNav, type RootParams } from '../nav'
 import { chooseStatus, unwatchMovie, watchEpisode, watchMovie } from '../ui/actions'
 import { CircleButton, Column, Segmented } from '../ui/kit'
-import { CardRow, Carousel, Poster, ProgressBar, SectionHeader, StarPill } from '../ui/media'
+import { CardRow, Carousel, Poster, ProgressBar, SectionHeader, Stars } from '../ui/media'
 import { PressableScale } from '../ui/motion'
 import { closeSheet, showMenu, showSheet } from '../ui/overlays'
 import { colors, display } from '../ui/theme'
@@ -40,7 +39,7 @@ import { ErrorNote } from './Discover'
 import { SeasonPanel } from './Season'
 import { openUrl } from './Settings'
 
-// A show's or movie's page: the backdrop with its logo and rating, then Details (your status,
+// A show's or movie's page: the banner with the cover art, title and rating, then Details (your status,
 // where to watch, scorecard, videos, genres and info), Progress (seasons and episodes) and Cast & Crew.
 
 type Details = ShowDetails | MovieDetails
@@ -99,84 +98,79 @@ function Body({ type, d, item, tab, setTab, startSeason }: { type: MediaType; d:
   const wide = useWide()
   const { width } = useWindowDimensions()
   const show = type === 'tv' ? (d as ShowDetails) : null
+  const movie = type === 'movie' ? (d as MovieDetails) : null
   const title = titleOf(d)
-  const heroH = wide ? Math.min(520, width * 0.42) : Math.min(520, width * 1.05)
-  const logo = logoOf(d.images)
-  const logoW = Math.min(wide ? 440 : width * 0.72, 520)
-  const logoH = logo ? Math.min(logoW / logo.aspect_ratio, wide ? 170 : 130) : 0
+  const heroH = wide ? Math.min(500, width * 0.4) : Math.min(340, width * 0.66)
+  const posterW = wide ? 180 : 112
+  const region = currentRegion()
+  const cert = show ? (show.content_ratings?.results.find((r) => r.iso_3166_1 === region)?.rating ?? show.content_ratings?.results.find((r) => r.iso_3166_1 === 'US')?.rating) : movieCert(movie!, region)
+  const meta = show
+    ? [yearOf(show.first_air_date), `${show.number_of_seasons} ${show.number_of_seasons === 1 ? 'Season' : 'Seasons'}`, `${show.number_of_episodes} Episodes`, cert, show.networks[0]?.name]
+    : [yearOf(movie!.release_date), movie!.runtime ? duration(movie!.runtime) : '', cert]
+  const basics = useShow(show ? show.id : undefined)
+  const watched = useStore((s) => (item && show ? watchIndex(s.watches).episodes.get(item.id) : undefined))
+  const p = show ? showProgress(basics ?? show, item ?? { skippedSeasons: [] }, watched) : null
 
   return (
     <>
-      <View style={{ height: heroH, backgroundColor: colors.cardHi, justifyContent: 'flex-end', alignItems: 'center', paddingBottom: 60 }}>
+      {/* The banner, fading into the page, with the cover art at its bottom-left. */}
+      <View style={{ height: heroH, backgroundColor: colors.cardHi }}>
         {d.backdrop_path && <Image source={{ uri: img(d.backdrop_path, 'w1280')! }} style={{ position: 'absolute', width: '100%', height: '100%' }} contentFit="cover" transition={200} />}
-        <LinearGradient colors={['rgba(0,0,0,0.3)', 'rgba(0,0,0,0)', 'rgba(0,0,0,0.55)']} locations={[0, 0.4, 1]} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
-        {logo ? (
-          <Image source={{ uri: img(logo.file_path, 'w500')! }} style={{ width: logoH * logo.aspect_ratio, height: logoH, marginBottom: 16 }} contentFit="contain" transition={200} />
-        ) : (
-          <Text style={[display(wide ? 52 : 38, '#fff'), { textAlign: 'center', paddingHorizontal: 24, marginBottom: 14, textShadowColor: 'rgba(0,0,0,0.6)', textShadowRadius: 12 }]} numberOfLines={3}>
-            {title}
-          </Text>
-        )}
-        <StarPill value={d.vote_average} />
+        <LinearGradient colors={['rgba(0,0,0,0.3)', 'rgba(0,0,0,0)', colors.bg]} locations={[0, 0.4, 1]} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }} />
       </View>
-
-      {/* The panel over the backdrop. */}
-      <View style={{ marginTop: -36, borderTopLeftRadius: 30, borderTopRightRadius: 30, backgroundColor: colors.bg, paddingTop: 16, borderTopWidth: 1, borderColor: colors.border }}>
-        <Column>
-          <View style={{ marginBottom: 20, maxWidth: wide ? 520 : undefined, alignSelf: wide ? 'center' : 'stretch', width: '100%' }}>
-            <Segmented<Tab>
-              value={tab}
-              onChange={setTab}
-              options={[{ label: 'Details', value: 'details' }, ...(show ? [{ label: 'Progress', value: 'progress' as Tab }] : []), { label: 'Cast & Crew', value: 'cast' }]}
-            />
+      <Column>
+        <View style={{ flexDirection: 'row', marginTop: -posterW * 0.72, marginBottom: 22 }}>
+          <Poster path={d.poster_path} title={title} width={posterW} radius={12} />
+          <View style={{ flex: 1, marginLeft: wide ? 22 : 16, justifyContent: 'flex-end' }}>
+            <Text style={display(wide ? 44 : 28)} numberOfLines={3}>
+              {title}
+            </Text>
+            <Text style={{ color: colors.dim, fontSize: 15, marginTop: 4 }}>{meta.filter(Boolean).join('  •  ')}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 14, marginTop: 10 }}>
+              <Stars value={d.vote_average} size={16} />
+              {item?.rating ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name="person" size={13} color={colors.accentHi} />
+                  <Text style={{ color: colors.accentHi, fontWeight: '700', marginLeft: 4 }}>{`${item.rating}/10`}</Text>
+                </View>
+              ) : null}
+              <StatusBadge status={show ? show.status : movie!.status} />
+            </View>
+            {p && p.total > 0 && (
+              <Pressable onPress={() => setTab('progress')} style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12 }}>
+                <ProgressBar value={p.watched / p.total} height={7} style={{ width: 150 }} />
+                <Text style={{ color: colors.text, fontSize: 13, fontWeight: '700', marginLeft: 10 }}>{`${Math.round((p.watched / p.total) * 100)}% Complete`}</Text>
+              </Pressable>
+            )}
           </View>
-          {tab === 'details' && <DetailsTab type={type} d={d} item={item} title={title} onProgress={() => setTab('progress')} />}
-          {tab === 'progress' && show && <ProgressTab show={show} item={item} startSeason={startSeason} />}
-          {tab === 'cast' && <CastTab type={type} d={d} />}
-        </Column>
-      </View>
+        </View>
+        <View style={{ marginBottom: 22, maxWidth: wide ? 520 : undefined, width: '100%' }}>
+          <Segmented<Tab>
+            value={tab}
+            onChange={setTab}
+            options={[{ label: 'Details', value: 'details' }, ...(show ? [{ label: 'Progress', value: 'progress' as Tab }] : []), { label: 'Cast & Crew', value: 'cast' }]}
+          />
+        </View>
+        {tab === 'details' && <DetailsTab type={type} d={d} item={item} title={title} />}
+        {tab === 'progress' && show && <ProgressTab show={show} item={item} startSeason={startSeason} />}
+        {tab === 'cast' && <CastTab type={type} d={d} />}
+      </Column>
     </>
   )
 }
 
 // ── Details ─────────────────────────────────────────────────────────────────────────────────────
 
-function DetailsTab({ type, d, item, title, onProgress }: { type: MediaType; d: Details; item: LibraryItem | undefined; title: string; onProgress: () => void }) {
-  const wide = useWide()
+function DetailsTab({ type, d, item, title }: { type: MediaType; d: Details; item: LibraryItem | undefined; title: string }) {
   const show = type === 'tv' ? (d as ShowDetails) : null
   const movie = type === 'movie' ? (d as MovieDetails) : null
   const region = currentRegion()
-  const cert = show ? (show.content_ratings?.results.find((r) => r.iso_3166_1 === region)?.rating ?? show.content_ratings?.results.find((r) => r.iso_3166_1 === 'US')?.rating) : movieCert(movie!, region)
-  const meta = show
-    ? [`${show.number_of_seasons} ${show.number_of_seasons === 1 ? 'Season' : 'Seasons'}`, `${show.number_of_episodes} Episodes`, cert]
-    : [yearOf(movie!.release_date), movie!.runtime ? duration(movie!.runtime) : '', cert]
   const basics = useShow(show ? show.id : undefined)
-  const watched = useStore((s) => (item && show ? watchIndex(s.watches).episodes.get(item.id) : undefined))
-  const p = show ? showProgress(basics ?? show, item ?? { skippedSeasons: [] }, watched) : null
   const keywords = show ? (show.keywords?.results ?? []) : (movie?.keywords?.keywords ?? [])
   const imdb = show ? show.external_ids?.imdb_id : movie?.imdb_id
 
   return (
     <>
-      <View style={{ flexDirection: 'row', marginBottom: 18 }}>
-        <Poster path={d.poster_path} title={title} width={wide ? 150 : 112} radius={12} />
-        <View style={{ flex: 1, marginLeft: 16, justifyContent: 'center' }}>
-          <Text style={display(wide ? 34 : 26)} numberOfLines={3}>
-            {title}
-          </Text>
-          <Text style={{ color: colors.dim, fontSize: 15, marginTop: 4 }}>{meta.filter(Boolean).join('  •  ')}</Text>
-          {p && p.total > 0 && (
-            <Pressable onPress={onProgress} style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10 }}>
-              <ProgressBar value={p.watched / p.total} height={7} style={{ width: 130 }} />
-              <Text style={{ color: colors.text, fontSize: 13, fontWeight: '700', marginLeft: 10 }}>{`${Math.round((p.watched / p.total) * 100)}% Complete`}</Text>
-            </Pressable>
-          )}
-          <View style={{ flexDirection: 'row', marginTop: 12 }}>
-            <StatusBadge status={show ? show.status : movie!.status} />
-          </View>
-        </View>
-      </View>
-
       <Actions type={type} d={d} item={item} title={title} />
       {show && <NextUpCard show={basics ?? show} item={item} />}
 

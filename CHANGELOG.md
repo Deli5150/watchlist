@@ -5,7 +5,7 @@
 First release.
 
 - A new look inspired by Showline: condensed headlines; show pages with Details, Progress and Cast & Crew tabs
-- Shows: Up Next, an Episode Queue with progress rings, this week's episodes and upcoming seasons
+- Shows: your pinned WatchList (scrolls sideways with the mouse wheel), an Episode Queue you can open and scroll through, this week's episodes and upcoming seasons
 - Movies: your Watchlist with runtimes, upcoming releases and recently watched
 - Library at a glance: stats and lists for Watching, Watch Later, Caught Up, Finished and more
 - Discover: recommendations from your library, trending and most anticipated

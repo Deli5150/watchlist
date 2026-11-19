@@ -270,16 +270,17 @@ async function screenshots(dir) {
     const [name, ...clicks] = step.split(':')
     for (const text of clicks.filter(Boolean)) {
       if (text.startsWith('!')) {
-        await win.webContents.executeJavaScript(text.slice(1).replace(/%2C/g, ',').replace(/%3A/g, ':'))
+        await win.webContents.executeJavaScript(text.slice(1).replace(/%2C/g, ',').replace(/%3A/g, ':').replace(/%26/g, '&')).catch((e) => console.log(`[step failed] ${e.message}`))
         await wait(900)
         continue
       }
       if (text.startsWith('@')) {
-        await win.webContents.executeJavaScript(`(() => { const el = [...document.querySelectorAll('[aria-label=${JSON.stringify(text.slice(1))}]')].pop(); el && el.click() })()`)
+        await win.webContents.executeJavaScript(`(() => { const el = [...document.querySelectorAll('[aria-label=${JSON.stringify(text.slice(1))}]')].filter((e) => e.offsetParent).pop(); el && el.click() })()`)
         await wait(900)
         continue
       }
-      await win.webContents.executeJavaScript(`(() => { const els = [...document.querySelectorAll('div,span')].filter(e => e.childElementCount === 0 && e.textContent.trim() === ${JSON.stringify(text)}); const el = els[els.length - 1]; el && el.click(); return !!el })()`)
+      // Only visible elements: hidden tabs stay mounted and would otherwise swallow the click.
+      await win.webContents.executeJavaScript(`(() => { const els = [...document.querySelectorAll('div,span')].filter(e => e.childElementCount === 0 && e.textContent.trim() === ${JSON.stringify(text)} && e.offsetParent); const el = els[els.length - 1]; el && el.click(); return !!el })()`)
       await wait(900)
     }
     await wait(1200)

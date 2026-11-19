@@ -5,7 +5,7 @@ export const CHANGELOG: Array<{ version: string; date: string; items: string[] }
     date: '2026-11-18',
     items: [
       'A new look inspired by Showline: condensed headlines, show pages with Details, Progress and Cast & Crew',
-      'Shows: Up Next, an Episode Queue with progress rings, this week’s episodes and upcoming seasons',
+      'Shows: your pinned WatchList (scrolls sideways with the mouse wheel), an Episode Queue you can open and scroll through, this week’s episodes and upcoming seasons',
       'Movies: your Watchlist with runtimes, upcoming releases and recently watched',
       'Library at a glance: stats and lists for Watching, Watch Later, Caught Up, Finished and more',
       'Discover: recommendations from your library, trending and most anticipated',
