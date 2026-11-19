@@ -1,7 +1,7 @@
 import { addDays, today } from './dates'
 import { cacheGet, cacheSet } from './storage'
 
-// The Movie Database (TMDB): every show, movie, season, person and picture in WatchLine comes from
+// The Movie Database (TMDB): every show, movie, season, person and picture in WatchList comes from
 // it, and "Where to watch" is TMDB's streaming data (supplied to TMDB by JustWatch). The key is a
 // TMDB API key or read access token in .env (EXPO_PUBLIC_TMDB_KEY), built into the app.
 //
@@ -38,7 +38,7 @@ const inflight = new Map<string, Promise<unknown>>()
 export class TmdbError extends Error {}
 
 async function request<T>(path: string, params: Record<string, string | number | undefined>): Promise<T> {
-  if (!KEY) throw new TmdbError('WatchLine was built without a TMDB key (see README → TMDB).')
+  if (!KEY) throw new TmdbError('WatchList was built without a TMDB key (see README → TMDB).')
   // (Built by hand: React Native's URLSearchParams can't set values.)
   const q = Object.entries(params)
     .filter(([, v]) => v !== undefined && v !== '')
@@ -110,7 +110,7 @@ export function invalidate(path: string): void {
   for (const k of memory.keys()) if (k.startsWith(`${path}?`)) memory.delete(k)
 }
 
-// ── Shapes (only the fields WatchLine uses) ─────────────────────────────────────────────────────
+// ── Shapes (only the fields WatchList uses) ─────────────────────────────────────────────────────
 
 export interface Genre {
   id: number

@@ -1,16 +1,16 @@
-# WatchLine
+# WatchList
 
 Track the shows and movies you watch — inspired by the iOS app Showline. For **macOS**, **Windows** and **Android**.
 
 - **Up Next** — the next episode of every show you're watching; mark it watched in one click (with Undo, and an offer to mark earlier episodes too).
-- **Library** — shows and movies by status: Watching, Watchlist, Finished, Paused, Dropped, plus Favorites, your ratings and sorting.
+- **Library** — shows in Watchlist, Watch Later, Caught Up and Finished; movies in Watchlist, Watch Later and Watched; your ratings and sorting.
 - **Show and movie pages** — backdrop, progress, seasons and episodes, skippable seasons, cast, where to watch in your region, trailer, collections and recommendations.
 - **Scorecard** — every episode's rating in a season-by-season grid.
 - **Calendar** — new episodes and movie releases as a list, a week or a month, with desktop new-episode alerts.
 - **History** — watch time, episodes, shows and movies by year, a monthly chart, and editable watch dates.
 - **Discover and Search** — trending, popular, airing today, in theaters, coming soon, top rated, genres; search shows, movies and people.
 - **Sync with Google** — your library and history in a private Google Drive app folder, merged per item across devices.
-- **In-app updates** from GitHub Releases, backups (JSON) and history export (CSV), 9 themes, 8 languages.
+- **In-app updates** from GitHub Releases, backups (JSON) and history export (CSV), 9 themes, 6 wallpapers (or your own picture), 8 languages.
 
 ## Screenshots
 
@@ -54,7 +54,7 @@ Google Cloud project "WatchList", scope `drive.appdata` (+ email). Desktop OAuth
 ## Building
 
 ```sh
-npm run dist:desktop    # dist/: WatchLine-<v>.dmg, WatchLine-<v>-mac.zip, WatchLine-Setup-<v>.exe
+npm run dist:desktop    # dist/: WatchList-<v>.dmg, WatchList-<v>-mac.zip, WatchList-Setup-<v>.exe
 npx expo prebuild --platform android && npm run dist:android   # APK (release key: credentials/, passwords in ~/.gradle/gradle.properties)
 npm run release         # GitHub release for package.json's version, notes from CHANGELOG.md
 ```

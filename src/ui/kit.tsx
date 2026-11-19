@@ -17,14 +17,15 @@ export type IconName = ComponentProps<typeof Ionicons>['name']
  * wallpaper, darkened (more towards the bottom) so the page stays readable.
  */
 export function Backdrop() {
-  const wallpaper = useWallpaper()
-  const dim = useStore((s) => s.settings.wallpaperDim)
   const blur = useStore((s) => s.settings.wallpaperBlur)
+  const wallpaper = useWallpaper(blur)
+  const dim = useStore((s) => s.settings.wallpaperDim)
+  const custom = typeof wallpaper === 'object'
   return (
     <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg }]} pointerEvents="none">
       {wallpaper ? (
         <>
-          <Image source={wallpaper} style={StyleSheet.absoluteFill} contentFit="cover" blurRadius={blur ? 24 : 0} transition={150} />
+          <Image source={wallpaper} style={StyleSheet.absoluteFill} contentFit="cover" blurRadius={blur ? (custom ? 24 : 5) : 0} transition={150} cachePolicy="memory-disk" />
           <LinearGradient colors={[hexA(colors.bg, dim * 0.85), hexA(colors.bg, Math.min(1, dim + 0.2))]} style={StyleSheet.absoluteFill} />
         </>
       ) : (

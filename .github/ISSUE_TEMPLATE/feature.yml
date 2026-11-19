@@ -1,5 +1,5 @@
 name: Feature idea
-description: Something WatchLine should do
+description: Something WatchList should do
 labels: [enhancement]
 body:
   - type: textarea

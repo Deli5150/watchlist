@@ -78,8 +78,11 @@ export async function importWallpaper(): Promise<boolean> {
   return true
 }
 
-/** The current wallpaper's picture, or null for the theme's plain background. */
-export function useWallpaper(): WallpaperSource | null {
+/**
+ * The current wallpaper's picture, or null for the theme's plain background. `small`: a built-in
+ * one's small copy, for blurring (it looks the same blurred and is far cheaper to blur).
+ */
+export function useWallpaper(small = false): WallpaperSource | null {
   const id = useStore((s) => s.settings.wallpaper)
   const stamp = useStore((s) => s.settings.wallpaperStamp)
   const [custom, setCustom] = useState<string | null>(() => (loaded?.stamp === stamp ? (loaded.value ?? null) : null))
@@ -93,5 +96,6 @@ export function useWallpaper(): WallpaperSource | null {
   }, [id, stamp])
   if (!id) return null
   if (id === 'custom') return custom ? { uri: custom } : null
-  return WALLPAPERS.find((w) => w.id === id)?.full ?? null
+  const w = WALLPAPERS.find((x) => x.id === id)
+  return w ? (small ? w.thumb : w.full) : null
 }

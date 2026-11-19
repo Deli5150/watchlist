@@ -278,9 +278,9 @@ function Welcome() {
   return (
     <View style={{ backgroundColor: colors.card, borderRadius: 22, borderWidth: 1, borderColor: colors.border, padding: 24, alignItems: 'center' }}>
       <Ionicons name="tv-outline" size={42} color={colors.accentHi} />
-      <Text style={[display(28), { marginTop: 12 }]}>Welcome to WatchLine</Text>
+      <Text style={[display(28), { marginTop: 12 }]}>Welcome to WatchList</Text>
       <Text style={{ color: colors.dim, fontSize: 15, textAlign: 'center', marginTop: 8, lineHeight: 22, maxWidth: 460 }}>
-        Add the shows and movies you watch. WatchLine keeps your place in every show, tells you when new episodes air, and shows where to stream them.
+        Add the shows and movies you watch. WatchList keeps your place in every show, tells you when new episodes air, and shows where to stream them.
       </Text>
       <View style={{ flexDirection: 'row', gap: 10, marginTop: 18 }}>
         <Pressable onPress={() => setTab('search')} style={({ pressed }) => ({ height: 42, paddingHorizontal: 18, borderRadius: 21, backgroundColor: colors.accent, flexDirection: 'row', alignItems: 'center', opacity: pressed ? 0.8 : 1 })}>

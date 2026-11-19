@@ -12,7 +12,7 @@ import { useWide } from '../lib/layout'
 import { colors } from './theme'
 import { VideoFrame } from './VideoFrame'
 
-// Trailers and clips play here, inside WatchLine, over the page. "Open in YouTube" leaves the app.
+// Trailers and clips play here, inside WatchList, over the page. "Open in YouTube" leaves the app.
 // On phones the player covers the screen, Back closes it, and the phone may turn sideways while
 // it's open (the app is otherwise portrait) so the video, or YouTube's full screen, fills it.
 

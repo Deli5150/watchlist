@@ -7,7 +7,7 @@ const IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? ''
 const [major, minor, patch] = version.split('.').map(Number)
 
 const config: ExpoConfig = {
-  name: 'WatchLine',
+  name: 'WatchList',
   slug: 'watchlist',
   scheme: 'watchlist',
   version,
@@ -41,6 +41,7 @@ const config: ExpoConfig = {
     'expo-image',
     './plugins/withReleaseSigning',
     './plugins/withoutCodeShrinking',
+    './plugins/withPhoneArchitectures',
     // Google's sign-in on iPhone needs its client's URL scheme (Sync with Google).
     ...(IOS_CLIENT_ID ? [['@react-native-google-signin/google-signin', { iosUrlScheme: IOS_CLIENT_ID.split('.').reverse().join('.') }] as [string, object]] : ['@react-native-google-signin/google-signin'])
   ]

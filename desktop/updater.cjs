@@ -1,7 +1,7 @@
 // In-app updates from the GitHub repo's Releases (published by scripts/release.mjs). Builds are
-// ad-hoc signed, which the usual Electron updaters refuse, so WatchLine installs its own way:
+// ad-hoc signed, which the usual Electron updaters refuse, so WatchList installs its own way:
 //   macOS     the release's -mac.zip, unpacked, swapped in for the running .app, then reopened
-//   Windows   the release's Setup .exe, run silently into the same folder; it reopens WatchLine
+//   Windows   the release's Setup .exe, run silently into the same folder; it reopens WatchList
 //   AppImage  the new AppImage swapped in for the running file, then started
 // The running copy is moved aside rather than overwritten, and cleaned up on the next launch.
 const { app, shell } = require('electron')
@@ -21,9 +21,9 @@ const RELEASES_PAGE = `https://github.com/${REPO}/releases/latest`
 const CHECK_EVERY_MS = 6 * 60 * 60_000
 
 const PATTERNS = {
-  'mac-app': /^WatchLine-[\d.]+-mac\.zip$/,
-  'win-nsis': /^WatchLine-Setup-[\d.]+\.exe$/,
-  appimage: /^WatchLine-[\d.]+-x86_64\.AppImage$/
+  'mac-app': /^WatchList-[\d.]+-mac\.zip$/,
+  'win-nsis': /^WatchList-Setup-[\d.]+\.exe$/,
+  appimage: /^WatchList-[\d.]+-x86_64\.AppImage$/
 }
 
 const macBundle = () => path.resolve(process.execPath, '../../..')
@@ -65,7 +65,7 @@ async function checkForUpdates(quiet = false) {
   if (['checking', 'downloading', 'ready', 'installing'].includes(status.state)) return
   set({ state: 'checking', error: undefined })
   try {
-    const res = await fetch(process.env.WATCHLIST_RELEASE_API || LATEST, { headers: { Accept: 'application/vnd.github+json', 'User-Agent': `WatchLine/${version}` } })
+    const res = await fetch(process.env.WATCHLIST_RELEASE_API || LATEST, { headers: { Accept: 'application/vnd.github+json', 'User-Agent': `WatchList/${version}` } })
     if (res.status === 404) return set({ state: 'latest', lastCheck: Date.now() })
     if (!res.ok) throw new Error(`GitHub answered ${res.status}`)
     const r = await res.json()
@@ -101,7 +101,7 @@ async function downloadUpdate() {
     rawFs.rmSync(updateDir(), { recursive: true, force: true })
     fs.mkdirSync(updateDir(), { recursive: true })
     const file = path.join(updateDir(), asset.name)
-    const res = await fetch(asset.url, { headers: { 'User-Agent': `WatchLine/${version}` } })
+    const res = await fetch(asset.url, { headers: { 'User-Agent': `WatchList/${version}` } })
     if (!res.ok || !res.body) throw new Error(`download failed (${res.status})`)
     const total = Number(res.headers.get('content-length')) || asset.size
     const hash = createHash('sha256')
@@ -129,7 +129,7 @@ async function downloadUpdate() {
   }
 }
 
-/** Runs `script` on its own (it outlives WatchLine) once this process has quit. */
+/** Runs `script` on its own (it outlives WatchList) once this process has quit. */
 function afterQuit(script, env) {
   spawn('/bin/sh', ['-c', `while kill -0 ${process.pid} 2>/dev/null; do sleep 0.3; done; ${script}`], { detached: true, stdio: 'ignore', env }).unref()
 }
@@ -161,7 +161,7 @@ async function installUpdate() {
       }
       afterQuit(`/usr/bin/open -n ${quote(target)}`)
     } else if (kind === 'win-nsis') {
-      // electron-builder's installer: /S installs silently into the same folder, --force-run reopens WatchLine.
+      // electron-builder's installer: /S installs silently into the same folder, --force-run reopens WatchList.
       spawn(downloaded, ['/S', '--updated', '--force-run'], { detached: true, stdio: 'ignore' }).unref()
     } else if (kind === 'appimage') {
       const target = process.env.APPIMAGE
@@ -173,12 +173,12 @@ async function installUpdate() {
       for (const k of ['APPIMAGE', 'APPDIR', 'OWD', 'ARGV0', 'CHROME_DESKTOP']) delete env[k]
       afterQuit(`exec ${quote(target)}`, env)
     } else {
-      throw new Error("this copy of WatchLine can't update itself")
+      throw new Error("this copy of WatchList can't update itself")
     }
     app.isQuitting = true
     app.quit()
   } catch (e) {
-    const message = e.code === 'EACCES' ? "WatchLine's folder can't be changed by your account" : e.message
+    const message = e.code === 'EACCES' ? "WatchList's folder can't be changed by your account" : e.message
     set({ state: 'error', error: `Couldn't install the update: ${message}. Download it from the release page instead.`, page: release?.page ?? RELEASES_PAGE })
   }
 }

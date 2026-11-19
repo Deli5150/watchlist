@@ -2,7 +2,7 @@ import { Platform } from 'react-native'
 import type { AuthFetch } from './drive'
 import { desktop } from './storage'
 
-// Signing in to Google for Sync, with access to WatchLine's own folder in your Drive and nothing else.
+// Signing in to Google for Sync, with access to WatchList's own folder in your Drive and nothing else.
 // The desktop app signs in through your browser (desktop/google.cjs, a loopback redirect); phones
 // use Google's own sign-in (iOS and Android need their OAuth clients in the Cloud project; see
 // README → Sync with Google).
@@ -22,7 +22,7 @@ async function native() {
   return mod
 }
 
-/** Whether this copy of WatchLine can sign in to Google. */
+/** Whether this copy of WatchList can sign in to Google. */
 export function googleAvailable(): boolean {
   if (desktop) return desktop.google.configured
   if (Platform.OS === 'android') return true
@@ -40,7 +40,7 @@ export async function googleSignIn(): Promise<string | undefined> {
     if (isCancelledResponse(res)) throw new Error('Sign-in was cancelled')
     if (!res.data.scopes.includes(DRIVE_SCOPE)) {
       const added = await GoogleSignin.addScopes({ scopes: [DRIVE_SCOPE] })
-      if (!added || isCancelledResponse(added) || !added.data.scopes.includes(DRIVE_SCOPE)) throw new Error('WatchLine needs access to its Drive folder to sync. Try again and leave the box ticked.')
+      if (!added || isCancelledResponse(added) || !added.data.scopes.includes(DRIVE_SCOPE)) throw new Error('WatchList needs access to its Drive folder to sync. Try again and leave the box ticked.')
     }
     return res.data.user.email
   } catch (e) {

@@ -71,7 +71,7 @@ export function startSync(): void {
 }
 
 export async function turnOnSync(): Promise<void> {
-  if (!googleAvailable()) throw new Error('Sync isn’t set up in this copy of WatchLine (it needs a Google OAuth client; see README → Sync with Google).')
+  if (!googleAvailable()) throw new Error('Sync isn’t set up in this copy of WatchList (it needs a Google OAuth client; see README → Sync with Google).')
   const email = await googleSignIn()
   drive.reset()
   applySynced({ sync: { ...useStore.getState().sync, enabled: true, email: email ?? (await drive.email()), error: undefined } })

@@ -6,19 +6,13 @@ const updater = require('./updater.cjs')
 const google = require('./google.cjs')
 const { version } = require('./package.json')
 
-// WatchLine's desktop shell: the app's web build (web/, from `expo export`) served over app://,
+// WatchList's desktop shell: the app's web build (web/, from `expo export`) served over app://,
 // with its data in a JSON file, TMDB responses cached as files, new-episode alerts as system
-// notifications (WatchLine keeps running in the background for them), and the updater (updater.cjs).
+// notifications (WatchList keeps running in the background for them), and the updater (updater.cjs).
 
 const WEB = path.join(__dirname, 'web')
 const DATA = () => path.join(app.getPath('userData'), 'watchlist.json')
 const REMINDERS = () => path.join(app.getPath('userData'), 'reminders.json')
-
-// The app was called WatchList: keep using its data folder (the name picks the folder otherwise).
-if (!app.commandLine.hasSwitch('user-data-dir')) {
-  const old = path.join(app.getPath('appData'), 'WatchList')
-  if (fs.existsSync(old)) app.setPath('userData', old)
-}
 
 protocol.registerSchemesAsPrivileged([{ scheme: 'app', privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true } }])
 
@@ -59,7 +53,7 @@ function createWindow() {
     height: 820,
     minWidth: 420,
     minHeight: 600,
-    title: 'WatchLine',
+    title: 'WatchList',
     backgroundColor: '#0a0a0c',
     show: false,
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
@@ -87,7 +81,7 @@ function createWindow() {
       win.webContents.executeJavaScript(`if(!document.getElementById('watchlist-drag')){const d=document.createElement('div');d.id='watchlist-drag';document.body.prepend(d)}`)
     })
   }
-  // Links open in the browser, never inside WatchLine.
+  // Links open in the browser, never inside WatchList.
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (/^https?:/.test(url)) void shell.openExternal(url)
     return { action: 'deny' }
@@ -98,7 +92,7 @@ function createWindow() {
       if (/^https?:/.test(url)) void shell.openExternal(url)
     }
   })
-  // Closing the window keeps WatchLine running for new-episode alerts (quit from the menu, dock or tray).
+  // Closing the window keeps WatchList running for new-episode alerts (quit from the menu, dock or tray).
   win.on('close', (e) => {
     if (!app.isQuitting) {
       e.preventDefault()
@@ -119,10 +113,10 @@ function createTray() {
   if (process.platform === 'darwin') return
   const icon = nativeImage.createFromPath(path.join(__dirname, 'build', 'tray.png')).resize({ width: 18, height: 18 })
   tray = new Tray(icon)
-  tray.setToolTip('WatchLine')
+  tray.setToolTip('WatchList')
   tray.setContextMenu(
     Menu.buildFromTemplate([
-      { label: 'Open WatchLine', click: showWindow },
+      { label: 'Open WatchList', click: showWindow },
       { type: 'separator' },
       { label: 'Quit', click: () => ((app.isQuitting = true), app.quit()) }
     ])
@@ -189,7 +183,7 @@ function notify(title, body) {
   n.show()
 }
 
-/** Shows reminders that are due (or were missed in the last day while WatchLine wasn't running). */
+/** Shows reminders that are due (or were missed in the last day while WatchList wasn't running). */
 function fireDue() {
   const now = Date.now()
   let changed = false

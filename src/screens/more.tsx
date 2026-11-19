@@ -179,7 +179,7 @@ export function DataScreen() {
   const [note, setNote] = useState<string | null>(null)
   const stamp = new Date().toISOString().slice(0, 10)
 
-  const exportJson = () => void saveText(`WatchLine-${stamp}.json`, JSON.stringify(exportData(), null, 2), 'application/json')
+  const exportJson = () => void saveText(`WatchList-${stamp}.json`, JSON.stringify(exportData(), null, 2), 'application/json')
   const exportCsv = () => {
     const byId = new Map(items.map((i) => [i.id, i]))
     const rows = [
@@ -191,7 +191,7 @@ export function DataScreen() {
           return [new Date(w.at).toISOString(), i?.type === 'movie' ? 'Movie' : 'Episode', i?.title ?? '', w.season ?? '', w.episode ?? '', w.runtime, i?.tmdbId ?? '']
         })
     ]
-    void saveText(`WatchLine-history-${stamp}.csv`, rows.map((r) => r.map(csvCell).join(',')).join('\n'), 'text/csv')
+    void saveText(`WatchList-history-${stamp}.csv`, rows.map((r) => r.map(csvCell).join(',')).join('\n'), 'text/csv')
   }
   const importJson = async () => {
     const res = await DocumentPicker.getDocumentAsync({ type: ['application/json', '*/*'], copyToCacheDirectory: true })
@@ -202,12 +202,12 @@ export function DataScreen() {
       const raw = JSON.parse(text) as Partial<AppData>
       if (!Array.isArray(raw.items)) throw new Error('not a backup')
       const data = normalize(raw)
-      confirm('Replace your library?', `This backup has ${data.items.length} titles and ${data.watches.length} watched episodes and movies. What’s in WatchLine now is replaced.`, 'Replace', () => {
+      confirm('Replace your library?', `This backup has ${data.items.length} titles and ${data.watches.length} watched episodes and movies. What’s in WatchList now is replaced.`, 'Replace', () => {
         replaceAll(data)
         setNote(`Restored ${data.items.length} titles.`)
       })
     } catch {
-      setNote('That file isn’t a WatchLine backup.')
+      setNote('That file isn’t a WatchList backup.')
     }
   }
 
@@ -216,7 +216,7 @@ export function DataScreen() {
       <SectionLabel>Backup</SectionLabel>
       <Group>
         <Row icon="download-outline" label="Export backup" sub="Your library and history, as a JSON file" onPress={exportJson} />
-        <Row icon="push-outline" label="Restore backup" sub="From a WatchLine JSON file" onPress={() => void importJson()} />
+        <Row icon="push-outline" label="Restore backup" sub="From a WatchList JSON file" onPress={() => void importJson()} />
         <Row icon="grid-outline" label="Export history" sub="Everything you watched, as CSV" onPress={exportCsv} />
       </Group>
       {note && <Text style={{ color: colors.dim, textAlign: 'center', marginBottom: 14 }}>{note}</Text>}
@@ -237,7 +237,7 @@ export function DataScreen() {
           onPress={() => confirm('Erase everything?', 'Your whole library and watch history are deleted. Export a backup first if you might want them.', 'Erase all', eraseAll)}
         />
       </Group>
-      <Text style={{ color: colors.faint, fontSize: 13, lineHeight: 18 }}>Your library stays on this device (and in your Google Drive if Sync is on). WatchLine only talks to TMDB to look up shows and movies.</Text>
+      <Text style={{ color: colors.faint, fontSize: 13, lineHeight: 18 }}>Your library stays on this device (and in your Google Drive if Sync is on). WatchList only talks to TMDB to look up shows and movies.</Text>
     </Page>
   )
 }
@@ -269,7 +269,7 @@ export function UpdatesScreen() {
     u.state === 'checking'
       ? 'Checking…'
       : u.state === 'latest'
-        ? 'WatchLine is up to date.'
+        ? 'WatchList is up to date.'
         : u.state === 'available'
           ? `Version ${u.version} is available.`
           : u.state === 'downloading'
@@ -277,7 +277,7 @@ export function UpdatesScreen() {
             : u.state === 'ready'
               ? `Version ${u.version} is ready to install.`
               : u.state === 'installing'
-                ? 'Installing… WatchLine will restart.'
+                ? 'Installing… WatchList will restart.'
                 : u.state === 'error'
                   ? u.error
                   : 'Check for a new version.'
@@ -285,7 +285,7 @@ export function UpdatesScreen() {
   return (
     <Page header={<Header title="Updates" />}>
       <View style={{ alignItems: 'center', marginVertical: 22 }}>
-        <Text style={{ color: colors.text, fontSize: 28, fontWeight: '700' }}>WatchLine {VERSION}</Text>
+        <Text style={{ color: colors.text, fontSize: 28, fontWeight: '700' }}>WatchList {VERSION}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8 }}>
           {busy && <ActivityIndicator color={colors.accentHi} style={{ marginRight: 8 }} />}
           <Text style={{ color: u.state === 'error' ? colors.danger : colors.dim, fontSize: 15, textAlign: 'center' }}>{message}</Text>
@@ -354,7 +354,7 @@ export function SyncScreen() {
       <View style={{ alignItems: 'center', marginVertical: 18 }}>
         <Ionicons name={sync.enabled ? 'cloud-done' : 'cloud-outline'} size={48} color={sync.enabled ? colors.accentHi : colors.dim} />
         <Text style={{ color: colors.dim, fontSize: 15, textAlign: 'center', marginTop: 10, lineHeight: 21 }}>
-          Keep your library and watch history the same on every device: your Mac, PC and Android phone. WatchLine keeps them in a private folder in your Google Drive that only WatchLine can see.
+          Keep your library and watch history the same on every device: your Mac, PC and Android phone. WatchList keeps them in a private folder in your Google Drive that only WatchList can see.
         </Text>
       </View>
       {sync.enabled ? (
@@ -388,7 +388,7 @@ export function SyncScreen() {
           </Group>
           {error && <Text style={{ color: colors.danger, textAlign: 'center', marginBottom: 14 }}>{error}</Text>}
           {desktop && <Text style={{ color: colors.faint, fontSize: 13, textAlign: 'center' }}>Google’s sign-in opens in your browser. Come back here when it’s done.</Text>}
-          {!googleAvailable() && <Text style={{ color: colors.faint, fontSize: 13, textAlign: 'center', marginTop: 8 }}>This copy of WatchLine was built without a Google client, so Sync isn’t available.</Text>}
+          {!googleAvailable() && <Text style={{ color: colors.faint, fontSize: 13, textAlign: 'center', marginTop: 8 }}>This copy of WatchList was built without a Google client, so Sync isn’t available.</Text>}
         </>
       )}
     </Page>
@@ -413,7 +413,7 @@ export function FeedbackScreen() {
         ]}
       />
       <Text style={{ color: colors.dim, fontSize: 14, marginVertical: 14, lineHeight: 20 }}>
-        {kind === 'bug' ? 'Say what you did, what you expected, and what happened instead. Your WatchLine version and device are added for you.' : 'What should WatchLine do, and why would it help?'}
+        {kind === 'bug' ? 'Say what you did, what you expected, and what happened instead. Your WatchList version and device are added for you.' : 'What should WatchList do, and why would it help?'}
       </Text>
       <Field value={title} onChangeText={setTitle} placeholder={kind === 'bug' ? 'Short summary, e.g. "Up Next skips an episode"' : 'Short summary, e.g. "Widgets"'} style={{ marginBottom: 12 }} />
       <Field value={text} onChangeText={setText} placeholder={kind === 'bug' ? 'What happened' : 'The idea'} multiline style={{ marginBottom: 18, minHeight: 160 }} />
@@ -438,7 +438,7 @@ export function AboutScreen() {
   return (
     <Page header={<Header title="About" />}>
       <View style={{ alignItems: 'center', marginVertical: 18 }}>
-        <Text style={{ color: colors.text, fontSize: 26, fontWeight: '800' }}>WatchLine {VERSION}</Text>
+        <Text style={{ color: colors.text, fontSize: 26, fontWeight: '800' }}>WatchList {VERSION}</Text>
         <Text style={{ color: colors.dim, fontSize: 15, marginTop: 6, textAlign: 'center' }}>Track the shows and movies you watch.</Text>
       </View>
       <SectionLabel>Data sources</SectionLabel>

@@ -14,10 +14,10 @@ async function driveError(res: { status: number; text: string }, what: string): 
   } catch {}
   const reasons = [e?.status, ...(e?.errors ?? []).map((x) => x.reason)].filter(Boolean).join(' ')
   if (/SERVICE_DISABLED|accessNotConfigured/.test(reasons) || /has not been used in project|is disabled/i.test(e?.message ?? '')) {
-    return new Error("The Google Drive API isn't turned on for WatchLine's Google Cloud project. Enable it at https://console.cloud.google.com/apis/library/drive.googleapis.com, wait a minute, then sync again.")
+    return new Error("The Google Drive API isn't turned on for WatchList's Google Cloud project. Enable it at https://console.cloud.google.com/apis/library/drive.googleapis.com, wait a minute, then sync again.")
   }
   if (/insufficientPermissions|ACCESS_TOKEN_SCOPE_INSUFFICIENT|insufficient authentication scopes/i.test(`${reasons} ${e?.message ?? ''}`)) {
-    return new Error('WatchLine wasn’t given access to its Google Drive folder. Turn Sync off and on again, and leave the Drive box ticked on Google’s page.')
+    return new Error('WatchList wasn’t given access to its Google Drive folder. Turn Sync off and on again, and leave the Drive box ticked on Google’s page.')
   }
   return new Error(`Google Drive ${what} failed (HTTP ${res.status}${e?.message ? `: ${e.message}` : ''})`)
 }

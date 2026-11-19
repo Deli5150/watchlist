@@ -1,7 +1,7 @@
 {
   "name": "watchlist",
   "version": "1.0.0",
-  "description": "WatchLine — track the shows and movies you watch, for macOS, Windows and Android",
+  "description": "WatchList — track the shows and movies you watch, for macOS, Windows and Android",
   "main": "index.ts",
   "dependencies": {
     "@expo-google-fonts/barlow-semi-condensed": "^0.4.1",
@@ -29,6 +29,7 @@
     "expo-system-ui": "~58.0.7",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "react-freeze": "1.0.4",
     "react-native": "0.88.1",
     "react-native-safe-area-context": "~5.11.1",
     "react-native-screens": "~4.30.1",

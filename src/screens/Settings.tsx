@@ -36,7 +36,7 @@ export default function Settings() {
         <Image source={require('../../assets/icon.png')} style={{ width: 44, height: 44, borderRadius: 11 }} />
         <View style={{ flex: 1, marginLeft: 14 }}>
           <Text style={display(22)}>
-            WATCHLINE <Text style={{ color: colors.accentHi }}>FREE FOREVER</Text>
+            WATCHLIST <Text style={{ color: colors.accentHi }}>FREE FOREVER</Text>
           </Text>
           <Text style={{ color: colors.text, fontSize: 14, marginTop: 2, opacity: 0.85 }}>{`${plural(items.filter((i) => i.type === 'tv').length, 'show')} · ${plural(items.filter((i) => i.type === 'movie').length, 'movie')} · ${watches.length.toLocaleString()} watched. No premium, no ads.`}</Text>
         </View>
@@ -78,8 +78,8 @@ export default function Settings() {
         <Row icon="sparkles-outline" label="What's New" onPress={() => nav.navigate('WhatsNew')} />
         <Row icon="cloud-download-outline" label="Updates" value={updateValue} onPress={() => nav.navigate('Updates')} />
         <Row icon="help-buoy-outline" label="Report a bug or request a feature" onPress={() => nav.navigate('Feedback')} />
-        <Row icon="tv-outline" label="About WatchLine" onPress={() => nav.navigate('About')} />
-        <Row icon="share-outline" label="Share WatchLine" accessory="none" onPress={() => void Share.share({ message: `I keep track of my shows and movies with WatchLine: ${REPO_URL}` })} />
+        <Row icon="tv-outline" label="About WatchList" onPress={() => nav.navigate('About')} />
+        <Row icon="share-outline" label="Share WatchList" accessory="none" onPress={() => void Share.share({ message: `I keep track of my shows and movies with WatchList: ${REPO_URL}` })} />
         <Row icon="logo-github" label="Source code" value="GitHub" accessory="external" onPress={() => openUrl(REPO_URL)} />
       </Group>
 
@@ -89,7 +89,7 @@ export default function Settings() {
         </View>
         <View style={{ flex: 1, marginLeft: 14 }}>
           <Text style={{ color: colors.text, fontSize: 15, fontWeight: '700' }}>Data provided by TMDB</Text>
-          <Text style={{ color: colors.dim, fontSize: 13, marginTop: 2 }}>WatchLine is not endorsed or certified by TMDB. Streaming data by JustWatch.</Text>
+          <Text style={{ color: colors.dim, fontSize: 13, marginTop: 2 }}>WatchList is not endorsed or certified by TMDB. Streaming data by JustWatch.</Text>
         </View>
       </Pressable>
       <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 22, paddingHorizontal: 6 }}>

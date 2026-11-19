@@ -1,4 +1,4 @@
-// Android release builds are signed with WatchLine's own key (credentials/, never uploaded)
+// Android release builds are signed with WatchList's own key (credentials/, never uploaded)
 // when its details are in ~/.gradle/gradle.properties (WATCHLIST_RELEASE_*), so every APK can install
 // over the last one. Without them, Expo's default debug signing applies.
 const { withAppBuildGradle } = require('expo/config-plugins')

@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import type { UpdateStatus } from './release'
 
-// Where WatchLine keeps its data: on desktop, a JSON file in the app's data folder (through the
+// Where WatchList keeps its data: on desktop, a JSON file in the app's data folder (through the
 // Electron preload's bridge); on phones (and a plain browser), AsyncStorage. TMDB responses are
 // cached the same way (desktop: one file each).
 

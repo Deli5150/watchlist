@@ -1,6 +1,6 @@
 {
   "name": "watchlist",
-  "productName": "WatchLine",
+  "productName": "WatchList",
   "version": "1.0.0",
   "description": "Track the shows and movies you watch",
   "author": "Deli5150",
@@ -18,8 +18,8 @@
   },
   "build": {
     "appId": "app.watchlist.tracker",
-    "productName": "WatchLine",
-    "copyright": "Copyright \u00a9 2026 WatchLine",
+    "productName": "WatchList",
+    "copyright": "Copyright © 2026 WatchList",
     "directories": {
       "output": "../dist",
       "buildResources": "build"
@@ -32,7 +32,21 @@
       "google.json",
       "web/**",
       "build/tray*.png",
-      "package.json"
+      "package.json",
+      "!web/assets/node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/AntDesign*",
+      "!web/assets/node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Entypo*",
+      "!web/assets/node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/EvilIcons*",
+      "!web/assets/node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Feather*",
+      "!web/assets/node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome*",
+      "!web/assets/node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome5*",
+      "!web/assets/node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome6*",
+      "!web/assets/node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Fontisto*",
+      "!web/assets/node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Foundation*",
+      "!web/assets/node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialCommunityIcons*",
+      "!web/assets/node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialIcons*",
+      "!web/assets/node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Octicons*",
+      "!web/assets/node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/SimpleLineIcons*",
+      "!web/assets/node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Zocial*"
     ],
     "artifactName": "${productName}-${version}-${arch}.${ext}",
     "mac": {
@@ -78,7 +92,7 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "WatchLine",
+      "shortcutName": "WatchList",
       "artifactName": "${productName}-Setup-${version}.${ext}"
     },
     "linux": {
@@ -96,14 +110,19 @@
       "description": "Track TV shows and movies: what is next, what is airing, where to watch, and your watch history.",
       "desktop": {
         "entry": {
-          "StartupWMClass": "WatchLine"
+          "StartupWMClass": "WatchList"
         }
       }
     },
     "appImage": {
       "artifactName": "${productName}-${version}-${arch}.${ext}"
     },
-    "publish": null
+    "publish": null,
+    "electronLanguages": [
+      "en",
+      "en-US",
+      "en-GB"
+    ]
   },
   "allowScripts": {
     "electron@45.0.0": true

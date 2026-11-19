@@ -1,5 +1,5 @@
 name: Bug
-description: Something in WatchLine isn't working right
+description: Something in WatchList isn't working right
 labels: [bug]
 body:
   - type: textarea
@@ -20,7 +20,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: WatchLine version
+      label: WatchList version
       placeholder: 1.0.0
   - type: textarea
     id: extra

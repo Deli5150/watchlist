@@ -4,6 +4,7 @@ import { BarlowSemiCondensed_600SemiBold, BarlowSemiCondensed_700Bold, useFonts 
 import { StatusBar } from 'expo-status-bar'
 import { memo, useEffect, useRef } from 'react'
 import { ActivityIndicator, Animated, AppState, Easing, Platform, View } from 'react-native'
+import { Freeze } from 'react-freeze'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { useTab, useWide, type TabKey } from './src/lib/layout'
 import { refreshLibrary, useShows } from './src/lib/library'
@@ -40,7 +41,7 @@ const nav = createNavigationContainerRef<RootParams>()
 if (__DEV__ && typeof globalThis !== 'undefined') {
   ;(globalThis as { __watchlistPreviewUpdate?: (iphone: boolean) => void }).__watchlistPreviewUpdate = (iphone) => {
     useUpdatePrompt.setState({ forceChooser: iphone })
-    useUpdate.setState({ state: 'available', version: '1.1.0', notes: '## What’s new\n- A preview of the update sheet', assetUrl: 'https://github.com/Deli5150/watchlist/releases/download/v1.1.0/WatchLine-1.1.0.ipa' })
+    useUpdate.setState({ state: 'available', version: '1.1.0', notes: '## What’s new\n- A preview of the update sheet', assetUrl: 'https://github.com/Deli5150/watchlist/releases/download/v1.1.0/WatchList-1.1.0.ipa' })
   }
 }
 
@@ -56,7 +57,10 @@ const SCREENS: Record<TabKey, React.ComponentType<{ active?: boolean }>> = {
   settings: memo(Settings)
 }
 
-/** One tab's screen: mounted the first time it's shown, then kept (with its scroll and state) and faded in. */
+/**
+ * One tab's screen: mounted the first time it's shown, then kept (with its scroll and state) and
+ * faded in. Hidden tabs are frozen: they don't re-render as your data changes until shown again.
+ */
 function TabPane({ active, k }: { active: boolean; k: TabKey }) {
   const opacity = useRef(new Animated.Value(active ? 1 : 0)).current
   const seen = useRef(active)
@@ -70,7 +74,9 @@ function TabPane({ active, k }: { active: boolean; k: TabKey }) {
   const Screen = SCREENS[k]
   return (
     <Animated.View style={{ flex: 1, display: active ? 'flex' : 'none', opacity }}>
-      <Screen active={active} />
+      <Freeze freeze={!active}>
+        <Screen active={active} />
+      </Freeze>
     </Animated.View>
   )
 }
@@ -171,7 +177,7 @@ export default function App() {
       ) : (
         <Shell key={`${themeId}-${wide}`}>
           <NavigationContainer ref={nav} theme={theme} initialState={navState.current} onStateChange={(st) => (navState.current = st)}>
-            <Root.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg }, animation: wide ? 'fade' : undefined }}>
+            <Root.Navigator screenOptions={{ headerShown: false, freezeOnBlur: true, contentStyle: { backgroundColor: colors.bg }, animation: wide ? 'fade' : undefined }}>
               <Root.Screen name="Tabs" component={Tabs} />
               <Root.Screen name="Title" component={Title} />
               <Root.Screen name="LibraryList" component={LibraryList} />

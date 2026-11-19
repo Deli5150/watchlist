@@ -124,7 +124,7 @@ export function UpdatePrompt() {
                     <Text style={{ color: colors.accentHi, fontSize: 12, fontWeight: '700', letterSpacing: 1.2 }}>NEW RELEASE</Text>
                   </View>
                   <Text style={{ color: colors.text, fontSize: 32, fontWeight: '800', marginTop: 10 }}>Update available</Text>
-                  <Text style={{ color: colors.dim, fontSize: 16, textAlign: 'center', marginTop: 6, lineHeight: 22 }}>See what’s new and get the latest version of WatchLine.</Text>
+                  <Text style={{ color: colors.dim, fontSize: 16, textAlign: 'center', marginTop: 6, lineHeight: 22 }}>See what’s new and get the latest version of WatchList.</Text>
                   <Text style={{ fontSize: 15, marginTop: 8 }}>
                     <Text style={{ color: colors.faint }}>{`${u.current} → `}</Text>
                     <Text style={{ color: colors.accentHi, fontWeight: '700' }}>{u.version}</Text>
@@ -161,7 +161,7 @@ export function UpdatePrompt() {
                   <Pressable onPress={() => useUpdatePrompt.setState({ page: 'prompt' })} hitSlop={10} style={{ width: 36 }} accessibilityLabel="Back">
                     <Ionicons name="chevron-back" size={26} color={colors.text} />
                   </Pressable>
-                  <Text style={{ flex: 1, textAlign: 'center', color: colors.text, fontSize: 30, fontWeight: '800' }}>Update WatchLine</Text>
+                  <Text style={{ flex: 1, textAlign: 'center', color: colors.text, fontSize: 30, fontWeight: '800' }}>Update WatchList</Text>
                   <View style={{ width: 36 }} />
                 </View>
                 <Text style={{ color: colors.dim, fontSize: 16, textAlign: 'center', marginTop: 6, marginBottom: 20 }}>Choose how you’d like to update.</Text>

@@ -66,11 +66,11 @@ export function Sidebar({ onTab, onFeedback }: { onTab: (t: TabKey) => void; onF
   )
 }
 
-/** "WATCHLINE" in the condensed headline font, LINE in the accent. */
+/** "WATCHLIST" in the condensed headline font, LIST in the accent. */
 export function Wordmark({ size, style }: { size: number; style?: object }) {
   return (
     <Text style={[display(size), { letterSpacing: 0.4 }, style]}>
-      WATCH<Text style={{ color: colors.accentHi }}>LINE</Text>
+      WATCH<Text style={{ color: colors.accentHi }}>LIST</Text>
     </Text>
   )
 }
