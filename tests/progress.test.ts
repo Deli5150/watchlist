@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { airedEpisodes, countdown, daysUntil, renumbered, seasonStarts, showProgress, unwatchedBefore, watchIndex } from '../src/lib/progress'
+import { airedEpisodes, countdown, daysUntil, inCaughtUp, renumbered, seasonStarts, showProgress, unwatchedBefore, watchIndex } from '../src/lib/progress'
 import { emptyMeta, merge, stampChanges, emptyDoc } from '../src/lib/sync'
 import type { Watch } from '../src/lib/types'
 
@@ -104,4 +104,14 @@ test('countdowns to release dates', () => {
   assert.deepEqual(countdown('2027-10-15', '2026-11-21'), ['11', 'months'])
   assert.deepEqual(countdown('2028-12-01', '2026-11-21'), ['2', 'years'])
   assert.deepEqual(countdown('2026-11-21', '2026-11-21'), ['Today', ''])
+})
+
+test('caught up: watching and caught up, or finished but still running', () => {
+  const p = (watched: number, caughtUp: boolean) => ({ watched, total: 5, next: caughtUp ? null : { season: 2, episode: 3 }, caughtUp, finished: false, left: 0 })
+  assert.ok(inCaughtUp({ status: 'watching' }, { status: 'Returning Series' }, p(5, true)))
+  assert.ok(!inCaughtUp({ status: 'watching' }, { status: 'Returning Series' }, p(3, false)))
+  // Finished, then new episodes came out: still listed under Caught Up.
+  assert.ok(inCaughtUp({ status: 'completed' }, { status: 'Returning Series' }, p(4, false)))
+  // Finished and ended: Finished.
+  assert.ok(!inCaughtUp({ status: 'completed' }, { status: 'Ended' }, p(5, true)))
 })

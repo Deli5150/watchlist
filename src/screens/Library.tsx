@@ -6,7 +6,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { useWide } from '../lib/layout'
 import { STATUS_LABEL, MOVIE_STATUS_LABEL, useShows } from '../lib/library'
 import { useAsync } from '../lib/hooks'
-import { countdown, monthYear, showProgress, today, watchIndex, type Progress } from '../lib/progress'
+import { countdown, inCaughtUp, monthYear, showProgress, today, watchIndex, type Progress } from '../lib/progress'
 import { movieBasics, type MovieBasics, type ShowBasics } from '../lib/tmdb'
 import { useStore } from '../lib/store'
 import type { LibraryItem, LibrarySort, MediaType } from '../lib/types'
@@ -38,10 +38,12 @@ const ROWS: Record<MediaType, Array<{ filter: LibraryFilter; label: string; sub:
 }
 
 /** Library items that belong to a list. */
-function matches(i: LibraryItem, filter: LibraryFilter, p: Progress | null): boolean {
+function matches(i: LibraryItem, filter: LibraryFilter, p: Progress | null, show: ShowBasics | undefined): boolean {
   if (filter === 'all') return true
   if (filter === 'favorites') return i.favorite
-  if (filter === 'caughtup') return i.status === 'watching' && Boolean(p?.caughtUp)
+  if (filter === 'caughtup') return i.type === 'tv' && inCaughtUp(i, show, p)
+  // Finished shows that haven't ended are under Caught Up instead.
+  if (filter === 'completed' && i.type === 'tv') return i.status === 'completed' && !inCaughtUp(i, show, p)
   // Shows set aside the old ways (Paused, Dropped) count as Watch Later.
   if (filter === 'planned' && i.type === 'tv') return i.status === 'planned' || i.status === 'later' || i.status === 'paused' || i.status === 'dropped'
   return i.status === filter
@@ -61,7 +63,7 @@ export default function Library() {
       progress.set(i.id, p)
       available += p.total
     }
-    const count = (type: MediaType, f: LibraryFilter) => items.filter((i) => i.type === type && matches(i, f, progress.get(i.id) ?? null)).length
+    const count = (type: MediaType, f: LibraryFilter) => items.filter((i) => i.type === type && matches(i, f, progress.get(i.id) ?? null, shows[i.tmdbId])).length
     return {
       progress,
       available,
@@ -201,7 +203,7 @@ export function LibraryList({ route }: NativeStackScreenProps<RootParams, 'Libra
     return items
       .filter((i) => i.type === type)
       .map((i) => ({ i, p: i.type === 'tv' && shows[i.tmdbId] ? showProgress(shows[i.tmdbId], i, idx.episodes.get(i.id)) : null, last: idx.last.get(i.id) }))
-      .filter(({ i, p }) => matches(i, filter, p) && (!q || i.title.toLowerCase().includes(q)))
+      .filter(({ i, p }) => matches(i, filter, p, shows[i.tmdbId]) && (!q || i.title.toLowerCase().includes(q)))
       .sort((a, b) => by[sort](a.i, b.i))
   }, [items, watches, shows, type, filter, query, sort])
 
@@ -266,9 +268,11 @@ function releaseOf(i: LibraryItem, show: ShowBasics | undefined, movie: MovieBas
 
 const ListRow = memo(function ListRow({ item, p, last, first, showInfo, release }: { item: LibraryItem; p: Progress | null; last: number | undefined; first: boolean; showInfo: { number_of_seasons: number; number_of_episodes: number } | undefined; release?: string | null }) {
   const nav = useRootNav()
-  const done = item.status === 'completed' || (item.type === 'movie' && Boolean(last))
+  // A finished show with new episodes out since counts them instead of a check.
+  const fresh = item.type === 'tv' && item.status === 'completed' && Boolean(p?.next)
+  const done = (item.status === 'completed' && !fresh) || (item.type === 'movie' && Boolean(last))
   const upcoming = release !== undefined && !done
-  const sub = upcoming ? (release ? `Upcoming  •  ${monthYear(release)}` : 'Unknown Release Date') : done && last ? `Last watched ${short(last)}` : item.type === 'tv' && showInfo ? `${showInfo.number_of_seasons} ${showInfo.number_of_seasons === 1 ? 'SEASON' : 'SEASONS'}  •  ${showInfo.number_of_episodes.toLocaleString()} EPISODES` : item.year
+  const sub = fresh && p ? `${p.left} NEW ${p.left === 1 ? 'EPISODE' : 'EPISODES'}` : upcoming ? (release ? `Upcoming  •  ${monthYear(release)}` : 'Unknown Release Date') : done && last ? `Last watched ${short(last)}` : item.type === 'tv' && showInfo ? `${showInfo.number_of_seasons} ${showInfo.number_of_seasons === 1 ? 'SEASON' : 'SEASONS'}  •  ${showInfo.number_of_episodes.toLocaleString()} EPISODES` : item.year
   const [count, unit] = release ? countdown(release) : ['TBA', '']
   return (
     <PressableScale onPress={() => nav.push('Title', { type: item.type, id: item.tmdbId })} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderTopWidth: first ? 0 : 1, borderColor: colors.separator }}>

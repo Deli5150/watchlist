@@ -7,7 +7,7 @@ import { addDays, today, toDate } from '../lib/dates'
 import { useAsync, useLocalSeasons } from '../lib/hooks'
 import { useTab, useWide } from '../lib/layout'
 import { refreshLibrary, useShows } from '../lib/library'
-import { daysUntil, epKey, showProgress, watchIndex, type Progress } from '../lib/progress'
+import { daysUntil, epKey, inCaughtUp, showProgress, watchIndex, type Progress } from '../lib/progress'
 import { useStore } from '../lib/store'
 import { img, seasons as fetchSeasons, type ShowBasics } from '../lib/tmdb'
 import type { LibraryItem } from '../lib/types'
@@ -57,9 +57,17 @@ export default function Shows() {
       .map((item) => ({ item, show: shows[item.tmdbId] }))
       .filter(({ show }) => (show.next_episode_to_air ? show.next_episode_to_air.episode_number === 1 : show.status === 'Returning Series'))
       .sort((a, b) => (a.show.next_episode_to_air?.air_date ?? '9999').localeCompare(b.show.next_episode_to_air?.air_date ?? '9999'))
+    // Finished shows with new episodes out since join the queue (they're under Caught Up in Library).
+    const returning: Row[] = items
+      .filter((i) => i.type === 'tv' && i.status === 'completed' && shows[i.tmdbId])
+      .map((item) => {
+        const show = shows[item.tmdbId]
+        return { item, show, p: showProgress(show, item, idx.episodes.get(item.id)), last: idx.last.get(item.id) ?? item.statusAt }
+      })
+      .filter((r) => r.p.next && inCaughtUp(r.item, r.show, r.p))
     return {
       pinned: rows,
-      queue: rows.filter((r) => !r.p || r.p.next),
+      queue: [...rows.filter((r) => !r.p || r.p.next), ...returning].sort((a, b) => b.last - a.last),
       seasons
     }
   }, [items, watches, shows])

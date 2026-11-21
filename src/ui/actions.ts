@@ -1,4 +1,4 @@
-import { addToLibrary, itemId, markEpisodes, markMovie, MOVIE_STATUS_LABEL, previousUnwatched, STATUS_LABEL, unmarkEpisodes, unmarkMovie } from '../lib/library'
+import { addToLibrary, finishShow, itemId, markEpisodes, markMovie, MOVIE_STATUS_LABEL, previousUnwatched, STATUS_LABEL, unmarkEpisodes, unmarkMovie } from '../lib/library'
 import { epKey, epLabel, type Ep } from '../lib/progress'
 import { useStore } from '../lib/store'
 import type { MediaSummary, MovieDetails, ShowBasics } from '../lib/tmdb'
@@ -41,8 +41,39 @@ export function watchSeason(show: ShowBasics, seasonNumber: number, episodes: Ar
     return
   }
   const runtimes = Object.fromEntries(episodes.filter((e) => e.runtime).map((e) => [epKey(seasonNumber, e.episode_number), e.runtime as number]))
-  markEpisodes(show, eps, Date.now(), runtimes)
-  toast(`Season ${seasonNumber} marked watched`, () => unmarkEpisodes(show, eps))
+  // Earlier seasons' aired episodes left unwatched (when you jump ahead to a later season).
+  const first = Math.min(...eps.map((e) => e.episode))
+  const prev = eps.length ? previousUnwatched(show, { season: seasonNumber, episode: first }).filter((e) => e.season < seasonNumber) : []
+  const mode = useStore.getState().settings.markPrevious
+  const mark = (withPrev: boolean) => {
+    const all = withPrev ? [...prev, ...eps] : eps
+    markEpisodes(show, all, Date.now(), runtimes)
+    toast(withPrev ? `Season ${seasonNumber} and ${prev.length} earlier ${prev.length === 1 ? 'episode' : 'episodes'} marked watched` : `Season ${seasonNumber} marked watched`, () => unmarkEpisodes(show, all))
+  }
+  if (prev.length && mode === 'ask') {
+    const seasons = [...new Set(prev.map((e) => e.season))]
+    const which = seasons.length === 1 ? `Season ${seasons[0]}` : `Seasons ${seasons.slice(0, -1).join(', ')} and ${seasons[seasons.length - 1]}`
+    showMenu(
+      'Watched the earlier seasons too?',
+      [
+        { label: `Mark ${which} watched too`, onPress: () => mark(true) },
+        { label: `Just Season ${seasonNumber}`, onPress: () => mark(false) }
+      ],
+      `${which} ${seasons.length === 1 ? 'has' : 'have'} ${prev.length} aired ${prev.length === 1 ? 'episode' : 'episodes'} not marked yet. (Settings → “Mark earlier episodes too” changes whether this asks.)`
+    )
+  } else mark(prev.length > 0 && mode === 'always')
+}
+
+/** Finished: marks every aired episode watched, with an Undo that puts things back. */
+export function finishShowWithUndo(show: ShowBasics, title: string): void {
+  const id = itemId('tv', show.id)
+  const before = useStore.getState().items.find((i) => i.id === id)?.status
+  const eps = finishShow(show)
+  toast(eps.length ? `${title} finished · ${eps.length} ${eps.length === 1 ? 'episode' : 'episodes'} marked watched` : `${title} finished`, () => {
+    if (eps.length) unmarkEpisodes(show, eps)
+    if (before) useStore.getState().setStatus(id, before)
+    else useStore.getState().removeItem(id)
+  })
 }
 
 export function watchMovie(movie: MovieDetails | MediaSummary): void {
@@ -73,6 +104,7 @@ export function chooseStatus(type: MediaType, m: ShowBasics | MovieDetails | Med
       selected: current?.status === s || (s === 'planned' && type === 'tv' && (current?.status === 'paused' || current?.status === 'dropped' || current?.status === 'later')),
       onPress: () => {
         if (type === 'movie' && s === 'completed') watchMovie(m as MovieDetails)
+        else if (type === 'tv' && s === 'completed') finishShowWithUndo(m as ShowBasics, title)
         else if (type === 'movie' && s !== 'completed' && current?.status === 'completed') {
           unmarkMovie(m.id)
           useStore.getState().setStatus(id, s)

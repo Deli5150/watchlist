@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { localizeShow } from './airdates'
 import { create } from 'zustand'
-import { ENDED, episodeId, epKey, renumbered, showProgress, unwatchedBefore, watchIndex, type Ep } from './progress'
+import { airedEpisodes, episodeId, epKey, renumbered, showProgress, unwatchedBefore, watchIndex, type Ep } from './progress'
 import { itemById, useStore } from './store'
 import { showBasics, yearOf, type MediaSummary, type MovieDetails, type ShowBasics, type ShowDetails } from './tmdb'
 import type { LibraryItem, MediaType, Status, Watch } from './types'
@@ -39,9 +39,7 @@ export function ensureShow(id: number, force = false): Promise<ShowBasics | null
 
 /**
  * Brings a saved show in step with TMDB's latest: episodes marked under a season's own numbering
- * move to TMDB's (see `seasonStarts`), and a Finished show that's coming back (a new season
- * announced, or new episodes out) returns to your Watchlist, where it shows as Caught Up until there's
- * something new to watch.
+ * move to TMDB's (see `seasonStarts`).
  */
 function tidyShow(show: ShowBasics): void {
   const item = itemById(itemId('tv', show.id))
@@ -61,12 +59,6 @@ function tidyShow(show: ShowBasics): void {
       .filter((w) => !have.has(w.id))
     s.removeWatches(old.map((w) => w.id))
     s.addWatches(moved)
-  }
-  if (item.status === 'completed' && !ENDED.includes(show.status)) {
-    const p = showProgress(show, item, watchIndex(useStore.getState().watches).episodes.get(item.id))
-    const lastSeason = show.last_episode_to_air?.season_number ?? 0
-    const coming = Boolean(show.next_episode_to_air) || show.seasons.some((x) => x.season_number > lastSeason) || Boolean(p.next)
-    if (p.watched > 0 && coming) s.setStatus(item.id, 'watching')
   }
 }
 
@@ -140,7 +132,9 @@ const runtimeOf = (show: ShowBasics): number => show.episode_run_time?.[0] || sh
 
 /**
  * Puts a show's status in step with its progress after episodes were (un)marked: finishing an
- * ended show completes it, and watching an episode (`watched`) moves it to Watching.
+ * ended show completes it, and watching an episode (`watched`) moves it to Watching. A Finished
+ * show stays Finished as new episodes come out and you watch them (Library lists it under Caught
+ * Up); unmarking episodes so you're no longer caught up moves it back.
  */
 export function syncStatus(itemIdValue: string, show: ShowBasics, watched = false): void {
   const item = itemById(itemIdValue)
@@ -148,7 +142,9 @@ export function syncStatus(itemIdValue: string, show: ShowBasics, watched = fals
   const p = showProgress(show, item, watchIndex(useStore.getState().watches).episodes.get(item.id))
   const { setStatus } = useStore.getState()
   if (p.finished) setStatus(item.id, 'completed')
-  else if (item.status === 'completed') setStatus(item.id, p.watched ? 'watching' : 'planned')
+  else if (item.status === 'completed') {
+    if (!watched && !p.caughtUp) setStatus(item.id, p.watched ? 'watching' : 'planned')
+  }
   else if (watched && p.watched > 0) setStatus(item.id, 'watching')
 }
 
@@ -171,6 +167,17 @@ export function markEpisodes(show: ShowBasics, eps: Ep[], at = Date.now(), runti
   }))
   useStore.getState().addWatches(watches)
   syncStatus(item.id, show, true)
+}
+
+/** Finished: every aired episode (but skipped seasons) watched, and the show set to Finished. */
+export function finishShow(given: ShowBasics): Ep[] {
+  const show = useShows.getState()[given.id] ?? given
+  const item = itemById(itemId('tv', show.id)) ?? addToLibrary('tv', show, 'completed')
+  const watched = watchIndex(useStore.getState().watches).episodes.get(item.id)
+  const eps = airedEpisodes(show, item.skippedSeasons).filter((ep) => !watched?.has(epKey(ep.season, ep.episode)))
+  if (eps.length) markEpisodes(show, eps)
+  useStore.getState().setStatus(item.id, 'completed')
+  return eps
 }
 
 export function unmarkEpisodes(show: ShowBasics, eps: Ep[]): void {

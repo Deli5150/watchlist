@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2] - 2026-11-21
+
+Changed
+- Setting a show to Finished marks every aired episode watched (Undo in the message puts them back)
+- A Finished show that gets new episodes stays Finished but moves to Library → Caught Up, showing how many new episodes there are, and joins the Episode Queue. A Finished show that hasn't ended is listed under Caught Up while you wait for its next season; Finished lists the shows that have ended
+- Marking a whole season watched when earlier seasons aren't marked asks whether to mark those seasons too (as marking an episode does; Settings → "Mark earlier episodes too" sets whether it asks)
+
 ## [1.0.1] - 2026-11-21
 
 Fixed

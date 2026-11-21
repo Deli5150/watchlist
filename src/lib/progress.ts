@@ -144,6 +144,16 @@ export function showProgress(show: Pick<ShowBasics, 'seasons' | 'last_episode_to
   return { watched: count, total: aired.length, next, caughtUp, finished: caughtUp && ENDED.includes(show.status), left: next ? aired.length - nextIndex : 0 }
 }
 
+/**
+ * Library's Caught Up: a show you're watching with every aired episode watched, or one you
+ * finished that hasn't ended (waiting on its next season, or with new episodes out since).
+ */
+export function inCaughtUp(item: Pick<LibraryItem, 'status'>, show: Pick<ShowBasics, 'status'> | undefined, p: Progress | null): boolean {
+  if (!show || !p || !p.watched) return false
+  if (item.status === 'watching') return p.caughtUp
+  return item.status === 'completed' && !ENDED.includes(show.status)
+}
+
 /** Earlier aired episodes you haven't watched, for "mark previous episodes too". */
 export function unwatchedBefore(show: Pick<ShowBasics, 'seasons' | 'last_episode_to_air'>, item: Pick<LibraryItem, 'skippedSeasons'>, watched: Map<string, Watch> | undefined, target: Ep): Ep[] {
   return airedEpisodes(show, item.skippedSeasons).filter(
