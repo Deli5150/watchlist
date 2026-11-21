@@ -9,6 +9,7 @@ import { dateOfTime } from '../lib/dates'
 import { useAsync, useSeason } from '../lib/hooks'
 import { useWide } from '../lib/layout'
 import { ensureShow, itemId, MOVIE_STATUS_LABEL, refreshItemFields, STATUS_LABEL, useShow } from '../lib/library'
+import { watchLinks } from '../lib/justwatch'
 import { duration, epLabel, formatDate, showProgress, watchIndex } from '../lib/progress'
 import { useStore } from '../lib/store'
 import {
@@ -180,7 +181,7 @@ function DetailsTab({ type, d, item, title }: { type: MediaType; d: Details; ite
           <Overview text={d.overview} />
         </Section>
       ) : null}
-      <WhereToWatch providers={d['watch/providers']?.results[region]} />
+      <WhereToWatch providers={d['watch/providers']?.results[region]} type={type} id={d.id} title={title} region={region} />
       {show && <ScorecardCard show={basics ?? show} />}
       <Videos title={title} videos={d.videos?.results} />
       {d.genres.length > 0 && (
@@ -395,8 +396,12 @@ function NextUpCard({ show, item }: { show: ShowBasics; item: LibraryItem | unde
   )
 }
 
-/** Streaming services (from JustWatch, through TMDB) for your region, as big logo tiles. */
-function WhereToWatch({ providers }: { providers: Providers | undefined }) {
+/**
+ * Streaming services (from JustWatch, through TMDB) for your region, as big logo tiles. Each opens
+ * the title on that service when JustWatch has its link, or else the title's page of services.
+ */
+function WhereToWatch({ providers, type, id, title, region }: { providers: Providers | undefined; type: MediaType; id: number; title: string; region: string }) {
+  const links = useAsync(() => (providers ? watchLinks(type, id, title, region) : Promise.resolve<Record<number, string>>({})), [type, id, region, Boolean(providers)])
   const seen = new Set<number>()
   const unique = (list: NonNullable<Providers['flatrate']>) => list.filter((p) => !seen.has(p.provider_id) && Boolean(seen.add(p.provider_id))).sort((a, b) => a.display_priority - b.display_priority)
   const groups = [
@@ -424,7 +429,7 @@ function WhereToWatch({ providers }: { providers: Providers | undefined }) {
               </Pressable>
             ) : null}
             {g.list.map((p) => (
-              <Pressable key={p.provider_id} accessibilityLabel={p.provider_name} onPress={open}>
+              <Pressable key={p.provider_id} accessibilityLabel={p.provider_name} onPress={links.data?.[p.provider_id] ? () => openUrl(links.data![p.provider_id]) : open}>
                 <Image source={{ uri: img(p.logo_path, 'w185')! }} style={{ width: 78, height: 78, borderRadius: 16 }} />
               </Pressable>
             ))}

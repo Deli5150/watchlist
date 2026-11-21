@@ -26,7 +26,7 @@ import { confirm } from '../ui/overlays'
 import { colors, THEMES } from '../ui/theme'
 import { openUpdatePrompt } from '../ui/UpdatePrompt'
 import { VERSION } from '../version'
-import { openUrl } from './Settings'
+import { openInApp, openUrl } from './Settings'
 
 // The screens under Settings.
 
@@ -424,7 +424,7 @@ export function FeedbackScreen() {
           icon="logo-github"
           iconColor={ready ? colors.accentHi : colors.faint}
           accessory="external"
-          onPress={ready ? () => openUrl(feedbackUrl(kind, title, text, VERSION)) : undefined}
+          onPress={ready ? () => openInApp(feedbackUrl(kind, title, text, VERSION)) : undefined}
         />
       </Group>
       <Group>

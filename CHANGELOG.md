@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.0.1] - 2026-11-21
+
+Fixed
+- Episode Queue: opening a show's episodes closes the one that was open, so only one show is open at a time (#1)
+- Marking episodes on a show's page now updates the Episode Queue for shows TMDB numbers across seasons, like One Piece (season 23 starts at episode 1156). Episodes marked the old way are moved over (#2)
+- Upcoming Episodes, the Calendar and episode lists show the day an episode comes out where you are: anime airing after midnight in Japan no longer show up a day late (#3)
+- Report a bug or request a feature on phones: the form now opens inside the app, so the type (bug or feature) and the description reach GitHub, not just the title (#5)
+- Caught Up: a finished show that gets a new season announced or new episodes goes back to your Watchlist, and shows in Caught Up while you wait (#7)
+
+New
+- Where to watch: tapping a service opens the show or movie on that service (The Boys on Prime Video), not just the list of services (#4)
+- Library: titles that aren't out yet show when they come out ("Upcoming • October, 2027" and a countdown), or "Unknown Release Date" (#6)
+
 ## [1.0.0] - 2026-11-18
 
 First release.

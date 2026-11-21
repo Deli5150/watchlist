@@ -32,6 +32,18 @@ function allowYouTubeEmbeds() {
   })
 }
 
+// "Where to watch" asks JustWatch's site API for each service's link to a title; it only answers
+// its own website, so let the app's pages read its answers.
+function allowJustWatch() {
+  session.defaultSession.webRequest.onHeadersReceived({ urls: ['https://apis.justwatch.com/*'] }, (details, callback) => {
+    const headers = Object.fromEntries(Object.entries(details.responseHeaders || {}).filter(([k]) => !k.toLowerCase().startsWith('access-control-')))
+    headers['Access-Control-Allow-Origin'] = ['*']
+    headers['Access-Control-Allow-Headers'] = ['content-type']
+    headers['Access-Control-Allow-Methods'] = ['POST, OPTIONS']
+    callback({ responseHeaders: headers, statusLine: details.method === 'OPTIONS' ? 'HTTP/1.1 204 No Content' : details.statusLine })
+  })
+}
+
 function serveWeb() {
   protocol.handle('app', (req) => {
     const { pathname } = new URL(req.url)
@@ -265,6 +277,7 @@ app.whenReady().then(() => {
   app.setAppUserModelId('app.watchlist.tracker')
   serveWeb()
   allowYouTubeEmbeds()
+  allowJustWatch()
   loadReminders()
   createWindow()
   createTray()

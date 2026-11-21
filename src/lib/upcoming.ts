@@ -1,4 +1,5 @@
 import { Platform } from 'react-native'
+import { localizeEpisodes } from './airdates'
 import { addDays, today } from './dates'
 import { desktop } from './storage'
 import { useStore } from './store'
@@ -6,7 +7,8 @@ import { season, tmdb, type EpisodeRef, type ShowBasics } from './tmdb'
 import type { LibraryItem } from './types'
 
 // What's coming up for the titles in your library: episodes of the shows you follow and the
-// release dates of your movies. Used by the Calendar and the desktop's new-episode alerts.
+// release dates of your movies. Used by the Calendar and the desktop's new-episode alerts. Episode
+// dates are on your calendar (airdates.ts).
 
 export interface UpcomingEpisode {
   kind: 'episode'
@@ -26,8 +28,11 @@ export type Upcoming = UpcomingEpisode | UpcomingMovie
 /** Shows that count: everything but dropped. */
 const follows = (i: LibraryItem) => i.type === 'tv' && i.status !== 'dropped'
 
-/** Episodes airing from `from` to `until` (YYYY-MM-DD, inclusive) of the shows you follow. */
-export async function upcomingEpisodes(items: LibraryItem[], shows: Record<number, ShowBasics>, from = addDays(today(), -7), until = addDays(today(), 120)): Promise<UpcomingEpisode[]> {
+/**
+ * Episodes airing from `from` to `until` (YYYY-MM-DD, inclusive) of the shows you follow, on your
+ * calendar (or, with `local` false, TMDB's dates: quicker, as TVmaze isn't asked).
+ */
+export async function upcomingEpisodes(items: LibraryItem[], shows: Record<number, ShowBasics>, from = addDays(today(), -7), until = addDays(today(), 120), local = true): Promise<UpcomingEpisode[]> {
   const out: UpcomingEpisode[] = []
   await Promise.all(
     items.filter(follows).map(async (item) => {
@@ -41,7 +46,7 @@ export async function upcomingEpisodes(items: LibraryItem[], shows: Record<numbe
       for (const n of numbers) {
         try {
           const s = await season(item.tmdbId, n, 6 * 3600_000)
-          for (const e of s.episodes) if (e.air_date && e.air_date >= from && e.air_date <= until) out.push({ kind: 'episode', date: e.air_date, item, episode: e })
+          for (const e of local ? await localizeEpisodes(item.tmdbId, s.episodes) : s.episodes) if (e.air_date && e.air_date >= from && e.air_date <= until) out.push({ kind: 'episode', date: e.air_date, item, episode: e })
         } catch {}
       }
     })

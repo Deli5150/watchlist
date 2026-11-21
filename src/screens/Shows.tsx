@@ -4,7 +4,7 @@ import { memo, useEffect, useMemo, useState } from 'react'
 import { ActivityIndicator, Platform, Pressable, ScrollView, Text, View } from 'react-native'
 import { useShallow } from 'zustand/react/shallow'
 import { addDays, today, toDate } from '../lib/dates'
-import { useAsync } from '../lib/hooks'
+import { useAsync, useLocalSeasons } from '../lib/hooks'
 import { useTab, useWide } from '../lib/layout'
 import { refreshLibrary, useShows } from '../lib/library'
 import { daysUntil, epKey, showProgress, watchIndex, type Progress } from '../lib/progress'
@@ -35,6 +35,8 @@ const DAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
 export default function Shows() {
   const { items, watches } = useStore(useShallow((s) => ({ items: s.items, watches: s.watches })))
   const shows = useShows()
+  // One show's episodes open in the Episode Queue at a time.
+  const [openId, setOpenId] = useState<string | null>(null)
 
   useEffect(() => {
     void refreshLibrary()
@@ -63,7 +65,10 @@ export default function Shows() {
   }, [items, watches, shows])
 
   const shownKey = items.filter((i) => i.type === 'tv' && i.status !== 'dropped').map((i) => `${i.id}@${shows[i.tmdbId]?.next_episode_to_air?.id ?? ''}`).join()
-  const week = useAsync(() => upcomingEpisodes(items, shows, today(), addDays(today(), 6)), [shownKey])
+  // TMDB's dates first, then the same on your calendar once TVmaze answers (airdates.ts).
+  const quick = useAsync(() => upcomingEpisodes(items, shows, today(), addDays(today(), 6), false), [shownKey])
+  const local = useAsync(() => upcomingEpisodes(items, shows, today(), addDays(today(), 6)), [shownKey])
+  const week = local.data ? local : quick
 
   return (
     <Page wide bottomSpace={120}>
@@ -84,7 +89,7 @@ export default function Shows() {
           <SectionHeader title="Episode Queue" icon="list" />
           <View style={{ marginBottom: 26 }}>
             {queue.map((r) => (
-              <QueueRow key={r.item.id} row={r} />
+              <QueueRow key={r.item.id} row={r} open={openId === r.item.id} onOpen={setOpenId} />
             ))}
           </View>
         </>
@@ -130,20 +135,20 @@ const PinTile = memo(function PinTile({ row }: { row: Row }) {
   )
 })
 
-/** A show in the Episode Queue; opens to its next few episodes. */
-const QueueRow = memo(function QueueRow({ row }: { row: Row }) {
-  const [open, setOpen] = useState(false)
+/** A show in the Episode Queue; opens to its next few episodes (closing the one open before). */
+const QueueRow = memo(function QueueRow({ row, open, onOpen }: { row: Row; open: boolean; onOpen: (id: string | null) => void }) {
   const nav = useRootNav()
   const { item, show, p } = row
   const n = p?.next
   // When open: every episode from the next one on (the rest of this season and the later ones).
   const numbers = open && show && n ? show.seasons.filter((x) => x.season_number >= n.season && x.season_number > 0 && !item.skippedSeasons.includes(x.season_number)).map((x) => x.season_number) : []
   const res = useAsync(() => (numbers.length ? fetchSeasons(item.tmdbId, numbers) : Promise.resolve([])), [item.tmdbId, numbers.join()])
+  const list = useLocalSeasons(item.tmdbId, res.data)
   const watched = useStore((s) => watchIndex(s.watches).episodes.get(item.id))
-  const nextEps = (res.data ?? []).flatMap((x) => x.episodes).filter((e) => n && (e.season_number > n.season || e.episode_number >= n.episode))
+  const nextEps = (list ?? []).flatMap((x) => x.episodes).filter((e) => n && (e.season_number > n.season || e.episode_number >= n.episode))
   return (
     <View style={{ backgroundColor: colors.card, borderRadius: 14, borderWidth: open ? 2 : 1, borderColor: open ? colors.accent : colors.border, marginBottom: 10, overflow: 'hidden' }}>
-      <Pressable onPress={() => setOpen(!open)} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', padding: 10, opacity: pressed ? 0.8 : 1 })}>
+      <Pressable onPress={() => onOpen(open ? null : item.id)} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', padding: 10, opacity: pressed ? 0.8 : 1 })}>
         <Poster path={item.poster} width={52} radius={7} />
         <View style={{ flex: 1, marginLeft: 14 }}>
           <Text style={display(21)} numberOfLines={1}>

@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
+import { localizeShow } from './airdates'
 import { create } from 'zustand'
-import { episodeId, epKey, showProgress, unwatchedBefore, watchIndex, type Ep } from './progress'
+import { ENDED, episodeId, epKey, renumbered, showProgress, unwatchedBefore, watchIndex, type Ep } from './progress'
 import { itemById, useStore } from './store'
 import { showBasics, yearOf, type MediaSummary, type MovieDetails, type ShowBasics, type ShowDetails } from './tmdb'
 import type { LibraryItem, MediaType, Status, Watch } from './types'
@@ -22,6 +23,11 @@ export function ensureShow(id: number, force = false): Promise<ShowBasics | null
     job = showBasics(id, force ? 0 : undefined)
       .then((show) => {
         useShows.setState({ [id]: show })
+        tidyShow(show)
+        // Then the latest and next episodes' dates on your calendar (airdates.ts), when TVmaze answers.
+        void localizeShow(show).then((local) => {
+          if (local !== show && useShows.getState()[id] === show) useShows.setState({ [id]: local })
+        })
         return show
       })
       .catch(() => useShows.getState()[id] ?? null)
@@ -29,6 +35,39 @@ export function ensureShow(id: number, force = false): Promise<ShowBasics | null
     loading.set(id, job)
   }
   return job
+}
+
+/**
+ * Brings a saved show in step with TMDB's latest: episodes marked under a season's own numbering
+ * move to TMDB's (see `seasonStarts`), and a Finished show that's coming back (a new season
+ * announced, or new episodes out) returns to your Watchlist, where it shows as Caught Up until there's
+ * something new to watch.
+ */
+function tidyShow(show: ShowBasics): void {
+  const item = itemById(itemId('tv', show.id))
+  if (!item) return
+  const s = useStore.getState()
+  const mine = s.watches.filter((w) => w.itemId === item.id && w.season !== null && w.episode !== null)
+  const moves = renumbered(show, mine.map((w) => ({ season: w.season!, episode: w.episode! })))
+  if (moves) {
+    const to = new Map(moves.map((m) => [episodeId(item.id, m.from.season, m.from.episode), m.to]))
+    const have = new Set(mine.map((w) => w.id))
+    const old = mine.filter((w) => to.has(w.id))
+    const moved = old
+      .map((w) => {
+        const ep = to.get(w.id)!
+        return { ...w, id: episodeId(item.id, ep.season, ep.episode), episode: ep.episode }
+      })
+      .filter((w) => !have.has(w.id))
+    s.removeWatches(old.map((w) => w.id))
+    s.addWatches(moved)
+  }
+  if (item.status === 'completed' && !ENDED.includes(show.status)) {
+    const p = showProgress(show, item, watchIndex(useStore.getState().watches).episodes.get(item.id))
+    const lastSeason = show.last_episode_to_air?.season_number ?? 0
+    const coming = Boolean(show.next_episode_to_air) || show.seasons.some((x) => x.season_number > lastSeason) || Boolean(p.next)
+    if (p.watched > 0 && coming) s.setStatus(item.id, 'watching')
+  }
 }
 
 /** A show's basics, loading them if needed. */

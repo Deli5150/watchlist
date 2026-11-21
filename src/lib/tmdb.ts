@@ -53,12 +53,20 @@ async function request<T>(path: string, params: Record<string, string | number |
 }
 
 /** A GET from TMDB, cached for `ttl` ms (in the current language). */
-export async function tmdb<T>(path: string, params: Record<string, string | number | undefined> = {}, ttl = 12 * HOUR): Promise<T> {
+export function tmdb<T>(path: string, params: Record<string, string | number | undefined> = {}, ttl = 12 * HOUR): Promise<T> {
   const all = { language, ...params }
   const key = `${path}?${Object.entries(all)
     .map(([k, v]) => `${k}=${v ?? ''}`)
     .sort()
     .join('&')}`
+  return cached(key, ttl, () => request<T>(path, all), (e) => e instanceof TmdbError && e.message === 'Not found on TMDB')
+}
+
+/**
+ * Anything fetched, cached under `key` for `ttl` ms (memory, then a file/AsyncStorage). When `load`
+ * fails, a stale copy is used instead, unless `final` says the failure is for good (not found).
+ */
+export async function cached<T>(key: string, ttl: number, load: () => Promise<T>, final: (e: unknown) => boolean = () => false): Promise<T> {
   const mem = memory.get(key) as Cached<T> | undefined
   if (mem && Date.now() - mem.at < ttl) return mem.data
   const pending = inflight.get(key)
@@ -76,13 +84,13 @@ export async function tmdb<T>(path: string, params: Record<string, string | numb
       }
     }
     try {
-      const data = await request<T>(path, all)
+      const data = await load()
       const entry = { at: Date.now(), data }
       memory.set(key, entry)
       void cacheSet(cacheKey(key), JSON.stringify(entry))
       return data
     } catch (e) {
-      if (stale && !(e instanceof TmdbError && e.message === 'Not found on TMDB')) {
+      if (stale && !final(e)) {
         memory.set(key, stale)
         return stale.data
       }

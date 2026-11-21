@@ -1,6 +1,7 @@
 import { Image } from 'expo-image'
 import * as Linking from 'expo-linking'
-import { Pressable, Share, Text, View } from 'react-native'
+import * as WebBrowser from 'expo-web-browser'
+import { Platform, Pressable, Share, Text, View } from 'react-native'
 import { useShallow } from 'zustand/react/shallow'
 import { LANGUAGES } from '../lib/defaults'
 import { REPO_URL } from '../lib/release'
@@ -18,6 +19,15 @@ import { regionName } from '../lib/region'
 export const openUrl = (url: string): void => {
   if (desktop) desktop.openExternal(url)
   else void Linking.openURL(url)
+}
+
+/**
+ * Opens a page in a browser inside the app on phones. Used for the filled-in GitHub forms: the
+ * GitHub app would take over the link and keep only the title.
+ */
+export const openInApp = (url: string): void => {
+  if (desktop || Platform.OS === 'web') openUrl(url)
+  else void WebBrowser.openBrowserAsync(url).catch(() => Linking.openURL(url))
 }
 
 export const plural = (n: number, word: string): string => `${n.toLocaleString()} ${word}${n === 1 ? '' : 's'}`

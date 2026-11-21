@@ -3,7 +3,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { memo, useMemo } from 'react'
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
 import { dateOfTime, timeOnDate } from '../lib/dates'
-import { useAsync } from '../lib/hooks'
+import { useAsync, useLocalSeasons } from '../lib/hooks'
 import { useWide } from '../lib/layout'
 import { itemId, setSkippedSeason, useShow } from '../lib/library'
 import { daysUntil, epKey, formatDate, hasAired, watchIndex, type Ep } from '../lib/progress'
@@ -31,8 +31,9 @@ const short = (ms: number): string => {
 export function SeasonPanel({ show, item, seasonNumber, onSeason, next }: { show: ShowBasics; item: LibraryItem | undefined; seasonNumber: number; onSeason: (n: number) => void; next: Ep | null }) {
   const n = seasonNumber
   const res = useAsync(() => fetchSeason(show.id, n), [show.id, n])
+  const one = useMemo(() => (res.data ? [res.data] : undefined), [res.data])
+  const s = useLocalSeasons(show.id, one)?.[0]
   const watched = useStore((s) => watchIndex(s.watches).episodes.get(itemId('tv', show.id)))
-  const s = res.data
   const numbers = useMemo(() => [...show.seasons].map((x) => x.season_number).sort((a, b) => (a === 0 ? 1 : b === 0 ? -1 : a - b)), [show.seasons])
   const at = numbers.indexOf(n)
   const aired = useMemo(() => (s ? s.episodes.filter((e) => hasAired(show, n, e.episode_number)) : []), [s, show, n])

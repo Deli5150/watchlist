@@ -5,7 +5,9 @@ import { Pressable, Text, View } from 'react-native'
 import { useShallow } from 'zustand/react/shallow'
 import { useWide } from '../lib/layout'
 import { STATUS_LABEL, MOVIE_STATUS_LABEL, useShows } from '../lib/library'
-import { showProgress, watchIndex, type Progress } from '../lib/progress'
+import { useAsync } from '../lib/hooks'
+import { countdown, monthYear, showProgress, today, watchIndex, type Progress } from '../lib/progress'
+import { movieBasics, type MovieBasics, type ShowBasics } from '../lib/tmdb'
 import { useStore } from '../lib/store'
 import type { LibraryItem, LibrarySort, MediaType } from '../lib/types'
 import { useRootNav, type LibraryFilter, type RootParams } from '../nav'
@@ -169,6 +171,9 @@ const SORTS: Array<{ value: LibrarySort; label: string }> = [
   { value: 'year', label: 'Release year' }
 ]
 
+/** The gold of "Upcoming" notes (Watch Later's colour). */
+const UPCOMING = '#d9a441'
+
 const short = (ms: number): string => {
   const d = new Date(ms)
   return `${d.getMonth() + 1}/${d.getDate()}/${String(d.getFullYear()).slice(2)}`
@@ -200,6 +205,14 @@ export function LibraryList({ route }: NativeStackScreenProps<RootParams, 'Libra
       .sort((a, b) => by[sort](a.i, b.i))
   }, [items, watches, shows, type, filter, query, sort])
 
+  // Release dates of the movies that may not be out yet (the year alone can't tell).
+  const thisYear = new Date().getFullYear()
+  const maybeUpcoming = type === 'movie' ? list.filter(({ i, last }) => !last && (!i.year || Number(i.year) >= thisYear)).map(({ i }) => i.tmdbId) : []
+  const movieDates = useAsync(
+    async () => Object.fromEntries(await Promise.all(maybeUpcoming.map(async (id) => [id, await movieBasics(id).catch(() => null)] as const))),
+    [maybeUpcoming.join()]
+  )
+
   return (
     <Page
       header={
@@ -225,7 +238,7 @@ export function LibraryList({ route }: NativeStackScreenProps<RootParams, 'Libra
       {list.length ? (
         <View style={{ backgroundColor: colors.card, borderRadius: 22, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 14 }}>
           {list.map(({ i, p, last }, n) => (
-            <ListRow key={i.id} item={i} p={p} last={last} first={n === 0} showInfo={shows[i.tmdbId]} />
+            <ListRow key={i.id} item={i} p={p} last={last} first={n === 0} showInfo={shows[i.tmdbId]} release={releaseOf(i, shows[i.tmdbId], movieDates.data?.[i.tmdbId])} />
           ))}
         </View>
       ) : (
@@ -235,10 +248,28 @@ export function LibraryList({ route }: NativeStackScreenProps<RootParams, 'Libra
   )
 }
 
-const ListRow = memo(function ListRow({ item, p, last, first, showInfo }: { item: LibraryItem; p: Progress | null; last: number | undefined; first: boolean; showInfo: { number_of_seasons: number; number_of_episodes: number } | undefined }) {
+/**
+ * When a title that isn't out yet comes out: its date, or null for "not announced"; undefined for
+ * titles already out (or not known yet).
+ */
+function releaseOf(i: LibraryItem, show: ShowBasics | undefined, movie: MovieBasics | null | undefined): string | null | undefined {
+  if (i.status === 'completed') return undefined
+  if (i.type === 'tv') {
+    if (!show || show.last_episode_to_air) return undefined
+    const date = show.next_episode_to_air?.air_date ?? show.first_air_date
+    return date && date > today() ? date : date ? undefined : null
+  }
+  if (!movie) return undefined
+  if (movie.release_date) return movie.release_date > today() ? movie.release_date : undefined
+  return movie.status === 'Released' ? undefined : null
+}
+
+const ListRow = memo(function ListRow({ item, p, last, first, showInfo, release }: { item: LibraryItem; p: Progress | null; last: number | undefined; first: boolean; showInfo: { number_of_seasons: number; number_of_episodes: number } | undefined; release?: string | null }) {
   const nav = useRootNav()
   const done = item.status === 'completed' || (item.type === 'movie' && Boolean(last))
-  const sub = done && last ? `Last watched ${short(last)}` : item.type === 'tv' && showInfo ? `${showInfo.number_of_seasons} ${showInfo.number_of_seasons === 1 ? 'SEASON' : 'SEASONS'}  •  ${showInfo.number_of_episodes.toLocaleString()} EPISODES` : item.year
+  const upcoming = release !== undefined && !done
+  const sub = upcoming ? (release ? `Upcoming  •  ${monthYear(release)}` : 'Unknown Release Date') : done && last ? `Last watched ${short(last)}` : item.type === 'tv' && showInfo ? `${showInfo.number_of_seasons} ${showInfo.number_of_seasons === 1 ? 'SEASON' : 'SEASONS'}  •  ${showInfo.number_of_episodes.toLocaleString()} EPISODES` : item.year
+  const [count, unit] = release ? countdown(release) : ['TBA', '']
   return (
     <PressableScale onPress={() => nav.push('Title', { type: item.type, id: item.tmdbId })} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderTopWidth: first ? 0 : 1, borderColor: colors.separator }}>
       <Poster path={item.poster} width={44} radius={6} />
@@ -246,9 +277,14 @@ const ListRow = memo(function ListRow({ item, p, last, first, showInfo }: { item
         <Text style={display(20)} numberOfLines={1}>
           {item.title}
         </Text>
-        <Text style={{ color: colors.dim, fontSize: done ? 14 : 12.5, fontWeight: done ? '500' : '700', letterSpacing: done ? 0 : 0.6, marginTop: 1 }}>{sub}</Text>
+        <Text style={{ color: upcoming ? UPCOMING : colors.dim, fontSize: done || upcoming ? 14 : 12.5, fontWeight: done ? '500' : '700', letterSpacing: done || upcoming ? 0 : 0.6, marginTop: 1 }}>{sub}</Text>
       </View>
-      {done ? (
+      {upcoming ? (
+        <View style={{ minWidth: 54, alignItems: 'center' }}>
+          <Text style={display(unit ? 24 : 17, release ? colors.text : UPCOMING)}>{count}</Text>
+          {unit ? <Text style={{ color: colors.dim, fontSize: 12, fontWeight: '700', marginTop: -2 }}>{unit}</Text> : null}
+        </View>
+      ) : done ? (
         <ProgressRing value={1} done size={46} />
       ) : p ? (
         <ProgressRing value={p.total ? p.watched / p.total : 0} label={String(p.caughtUp ? 0 : p.left || p.total)} size={46} color={item.status === 'planned' ? colors.dim : colors.accent} />
