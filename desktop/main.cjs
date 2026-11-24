@@ -273,6 +273,26 @@ app.on('activate', showWindow)
 app.on('before-quit', () => (app.isQuitting = true))
 app.on('window-all-closed', () => {})
 
+// ── App icon ─────────────────────────────────────────────────────────────────────────────────
+// Settings → App Icon: the app hands over the picked icon as a PNG, kept for the next start.
+
+const APP_ICON = () => path.join(app.getPath('userData'), 'app-icon.png')
+function applyIcon() {
+  if (!fs.existsSync(APP_ICON())) return
+  if (process.platform === 'darwin') app.dock?.setIcon(nativeImage.createFromPath(APP_ICON()))
+  else win?.setIcon(nativeImage.createFromPath(APP_ICON()))
+}
+ipcMain.handle('icon:set', (_e, dataUrl) => {
+  if (dataUrl) {
+    fs.writeFileSync(APP_ICON(), Buffer.from(dataUrl.split(',')[1], 'base64'))
+    applyIcon()
+    return
+  }
+  fs.rmSync(APP_ICON(), { force: true })
+  if (process.platform === 'darwin') app.dock?.setIcon(nativeImage.createFromPath(path.join(__dirname, 'build', 'icon.png')))
+  else win?.setIcon(nativeImage.createFromPath(path.join(__dirname, 'build', process.platform === 'linux' ? 'tray.png' : 'icon.png')))
+})
+
 app.whenReady().then(() => {
   app.setAppUserModelId('app.watchlist.tracker')
   serveWeb()
@@ -280,6 +300,7 @@ app.whenReady().then(() => {
   allowJustWatch()
   loadReminders()
   createWindow()
+  applyIcon()
   createTray()
   setInterval(fireDue, 30_000)
   updater.startUpdater((status) => win?.webContents.send('update:status', status))

@@ -61,6 +61,8 @@ export interface Settings {
   recentSearches: string[]
   /** Ask before marking earlier episodes too. */
   markPrevious: 'ask' | 'always' | 'never'
+  /** Settings → App Icon: "default" or an alternate's id (assets/app-icons/icons.json). */
+  appIcon: string
   /** Behind the pages: '' (the theme's colour), a built-in wallpaper's id, or 'custom' (your own picture). This device only. */
   wallpaper: string
   /** How much the wallpaper is darkened, 0–1, and whether it's blurred. */

@@ -25,6 +25,8 @@ export interface DesktopBridge {
     set(dataUrl: string | null): Promise<void>
   }
   openExternal(url: string): void
+  /** The dock (macOS) and taskbar (Windows) icon, as a PNG data URL; null for the usual one. */
+  setIcon(dataUrl: string | null): Promise<void>
   google: {
     configured: boolean
     signIn(): Promise<string | undefined>

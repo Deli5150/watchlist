@@ -19,6 +19,7 @@ contextBridge.exposeInMainWorld('watchlist', {
     set: (dataUrl) => ipcRenderer.invoke('wallpaper:set', dataUrl)
   },
   openExternal: (url) => ipcRenderer.send('open-external', url),
+  setIcon: (dataUrl) => ipcRenderer.invoke('icon:set', dataUrl),
   google: {
     configured: ipcRenderer.sendSync('google:configured'),
     signIn: () => ipcRenderer.invoke('google:sign-in'),

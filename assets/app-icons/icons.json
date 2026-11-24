@@ -1,0 +1,87 @@
+[
+  {
+    "id": "default",
+    "name": "Cinema",
+    "group": "Colours"
+  },
+  {
+    "id": "color-ocean",
+    "name": "Ocean",
+    "group": "Colours"
+  },
+  {
+    "id": "color-emerald",
+    "name": "Emerald",
+    "group": "Colours"
+  },
+  {
+    "id": "color-violet",
+    "name": "Violet",
+    "group": "Colours"
+  },
+  {
+    "id": "color-sunset",
+    "name": "Sunset",
+    "group": "Colours"
+  },
+  {
+    "id": "color-gold",
+    "name": "Gold",
+    "group": "Colours"
+  },
+  {
+    "id": "color-graphite",
+    "name": "Graphite",
+    "group": "Colours"
+  },
+  {
+    "id": "color-midnight",
+    "name": "Midnight",
+    "group": "Colours"
+  },
+  {
+    "id": "color-daylight",
+    "name": "Daylight",
+    "group": "Colours"
+  },
+  {
+    "id": "art-pixel",
+    "name": "Pixel Art",
+    "group": "Art Styles"
+  },
+  {
+    "id": "art-watercolor",
+    "name": "Watercolour",
+    "group": "Art Styles"
+  },
+  {
+    "id": "art-oil",
+    "name": "Oil Paint",
+    "group": "Art Styles"
+  },
+  {
+    "id": "art-neon",
+    "name": "Neon Sign",
+    "group": "Art Styles"
+  },
+  {
+    "id": "art-paper",
+    "name": "Paper Cut-Out",
+    "group": "Art Styles"
+  },
+  {
+    "id": "art-blueprint",
+    "name": "Blueprint",
+    "group": "Art Styles"
+  },
+  {
+    "id": "art-glass",
+    "name": "Stained Glass",
+    "group": "Art Styles"
+  },
+  {
+    "id": "art-synth",
+    "name": "Synthwave",
+    "group": "Art Styles"
+  }
+]

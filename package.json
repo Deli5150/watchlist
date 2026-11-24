@@ -1,6 +1,6 @@
 {
   "name": "watchlist",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "WatchList — track the shows and movies you watch, for macOS, Windows and Android",
   "main": "index.ts",
   "dependencies": {
@@ -12,6 +12,7 @@
     "@react-navigation/native": "^7.5.1",
     "@react-navigation/native-stack": "^7.21.0",
     "expo": "~58.0.25",
+    "expo-asset": "~58.0.21",
     "expo-blur": "~58.0.6",
     "expo-constants": "~58.0.16",
     "expo-document-picker": "~58.0.5",

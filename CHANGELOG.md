@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.3] - 2026-11-23
+
+New
+- New app icons in Settings → App Icon: the WatchList monitor in eight new colours (Ocean, Emerald, Violet, Sunset, Gold, Graphite, Midnight, Daylight) and in eight art styles (Pixel Art, Watercolour, Oil Paint, Neon Sign, Paper Cut-Out, Blueprint, Stained Glass, Synthwave)
+- On a Mac the dock icon changes, on Windows the taskbar icon, and on Android the launcher icon (once you leave the app)
+
 ## [1.0.2] - 2026-11-21
 
 Changed

@@ -27,6 +27,8 @@ import { colors, THEMES } from '../ui/theme'
 import { openUpdatePrompt } from '../ui/UpdatePrompt'
 import { VERSION } from '../version'
 import { openInApp, openUrl } from './Settings'
+import { AppIcon, dockIcon, ICONS } from '../ui/AppIcon'
+import { appIconChanged } from '../lib/appIcon'
 
 // The screens under Settings.
 
@@ -52,6 +54,40 @@ function WallpaperTile({ name, on, onPress, children }: { name: string; on: bool
       </View>
       <Text style={{ color: on ? colors.text : colors.dim, fontSize: 13, marginTop: 6, textAlign: 'center', fontWeight: on ? '700' : '500' }}>{name}</Text>
     </Pressable>
+  )
+}
+
+export function AppIconScreen() {
+  const { icon, setSettings } = useStore(useShallow((s) => ({ icon: s.settings.appIcon, setSettings: s.setSettings })))
+  const [note, setNote] = useState<string | null>(null)
+  const pick = async (id: string) => {
+    setSettings({ appIcon: id })
+    if (!desktop) {
+      appIconChanged()
+      return setNote('The new icon appears when you leave WatchList.')
+    }
+    await desktop.setIcon(id === 'default' ? null : await dockIcon(id))
+    setNote(desktop.platform === 'darwin' ? 'Dock icon changed.' : 'Icon changed. It shows on the taskbar while WatchList is open.')
+  }
+  return (
+    <Page header={<Header title="App Icon" />}>
+      {(['Colours', 'Art Styles'] as const).map((group) => (
+        <View key={group}>
+          <SectionLabel>{group === 'Colours' ? 'Colors' : group}</SectionLabel>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 20 }}>
+            {ICONS.filter((i) => i.group === group).map((i) => (
+              <Pressable key={i.id} onPress={() => void pick(i.id)} accessibilityRole="button" accessibilityLabel={`${i.name} icon`} accessibilityState={{ selected: icon === i.id }} style={{ alignItems: 'center', gap: 6, width: 84 }}>
+                <View style={{ borderRadius: 18, borderWidth: 3, borderColor: icon === i.id ? colors.accent : 'transparent', padding: 2 }}>
+                  <AppIcon id={i.id} size={64} />
+                </View>
+                <Text numberOfLines={1} style={{ color: icon === i.id ? colors.accentHi : colors.text, fontSize: 12.5, fontWeight: '600' }}>{i.name}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      ))}
+      {note && <Text style={{ color: colors.dim, fontSize: 13, paddingHorizontal: 4 }}>{note}</Text>}
+    </Page>
   )
 }
 

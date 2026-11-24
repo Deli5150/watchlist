@@ -42,6 +42,8 @@ const config: ExpoConfig = {
     './plugins/withReleaseSigning',
     './plugins/withoutCodeShrinking',
     './plugins/withPhoneArchitectures',
+    // Settings → App Icon on Android: the alternate icons in assets/app-icons (modules/app-icons).
+    ['./plugins/withAppIcons', { ios: false }],
     // Google's sign-in on iPhone needs its client's URL scheme (Sync with Google).
     ...(IOS_CLIENT_ID ? [['@react-native-google-signin/google-signin', { iosUrlScheme: IOS_CLIENT_ID.split('.').reverse().join('.') }] as [string, object]] : ['@react-native-google-signin/google-signin'])
   ]

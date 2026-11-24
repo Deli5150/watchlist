@@ -43,6 +43,7 @@ export const DEFAULT_SETTINGS: Settings = {
   searchScope: 'discover',
   recentSearches: [],
   markPrevious: 'ask',
+  appIcon: 'default',
   wallpaper: '',
   wallpaperDim: 0.55,
   wallpaperBlur: false,

@@ -15,6 +15,7 @@ export type RootParams = {
   Collection: { id: number }
   Browse: { title: string; list?: ListKind; genre?: { type: MediaType; id: number } }
   Appearance: undefined
+  AppIcon: undefined
   Region: undefined
   Language: undefined
   Data: undefined

@@ -15,6 +15,7 @@ import { colors, display, THEMES } from '../ui/theme'
 import { VERSION } from '../version'
 import { Wordmark } from '../ui/Sidebar'
 import { regionName } from '../lib/region'
+import { ICONS } from '../ui/AppIcon'
 
 export const openUrl = (url: string): void => {
   if (desktop) desktop.openExternal(url)
@@ -55,6 +56,7 @@ export default function Settings() {
       <GroupTitle>Appearance & Customization</GroupTitle>
       <Group>
         <Row icon="contrast" label="Theme & Wallpaper" value={THEMES[settings.theme]?.name} onPress={() => nav.navigate('Appearance')} />
+        <Row icon="apps-outline" label="App Icon" value={ICONS.find((i) => i.id === settings.appIcon)?.name ?? 'Cinema'} onPress={() => nav.navigate('AppIcon')} />
         <Row icon="language-outline" label="Titles and descriptions" value={LANGUAGES.find((l) => l.code === settings.language)?.name ?? settings.language} onPress={() => nav.navigate('Language')} />
         <Row
           icon="checkmark-done-outline"

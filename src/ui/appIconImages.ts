@@ -1,0 +1,41 @@
+// Pictures for Settings → App Icon (assets/app-icons, drawn by the icon generator): small ones for
+// the list, and the macOS dock icon. Listed by hand because the bundler needs each require() spelled out.
+export const APP_ICON_THUMBS: Record<string, number> = {
+  'default': require('../../assets/app-icons/thumb/default.png'),
+  'color-ocean': require('../../assets/app-icons/thumb/color-ocean.png'),
+  'color-emerald': require('../../assets/app-icons/thumb/color-emerald.png'),
+  'color-violet': require('../../assets/app-icons/thumb/color-violet.png'),
+  'color-sunset': require('../../assets/app-icons/thumb/color-sunset.png'),
+  'color-gold': require('../../assets/app-icons/thumb/color-gold.png'),
+  'color-graphite': require('../../assets/app-icons/thumb/color-graphite.png'),
+  'color-midnight': require('../../assets/app-icons/thumb/color-midnight.png'),
+  'color-daylight': require('../../assets/app-icons/thumb/color-daylight.png'),
+  'art-pixel': require('../../assets/app-icons/thumb/art-pixel.png'),
+  'art-watercolor': require('../../assets/app-icons/thumb/art-watercolor.png'),
+  'art-oil': require('../../assets/app-icons/thumb/art-oil.png'),
+  'art-neon': require('../../assets/app-icons/thumb/art-neon.png'),
+  'art-paper': require('../../assets/app-icons/thumb/art-paper.png'),
+  'art-blueprint': require('../../assets/app-icons/thumb/art-blueprint.png'),
+  'art-glass': require('../../assets/app-icons/thumb/art-glass.png'),
+  'art-synth': require('../../assets/app-icons/thumb/art-synth.png'),
+}
+
+export const APP_ICON_DOCK: Record<string, number> = {
+  'default': require('../../assets/app-icons/mac/default.png'),
+  'color-ocean': require('../../assets/app-icons/mac/color-ocean.png'),
+  'color-emerald': require('../../assets/app-icons/mac/color-emerald.png'),
+  'color-violet': require('../../assets/app-icons/mac/color-violet.png'),
+  'color-sunset': require('../../assets/app-icons/mac/color-sunset.png'),
+  'color-gold': require('../../assets/app-icons/mac/color-gold.png'),
+  'color-graphite': require('../../assets/app-icons/mac/color-graphite.png'),
+  'color-midnight': require('../../assets/app-icons/mac/color-midnight.png'),
+  'color-daylight': require('../../assets/app-icons/mac/color-daylight.png'),
+  'art-pixel': require('../../assets/app-icons/mac/art-pixel.png'),
+  'art-watercolor': require('../../assets/app-icons/mac/art-watercolor.png'),
+  'art-oil': require('../../assets/app-icons/mac/art-oil.png'),
+  'art-neon': require('../../assets/app-icons/mac/art-neon.png'),
+  'art-paper': require('../../assets/app-icons/mac/art-paper.png'),
+  'art-blueprint': require('../../assets/app-icons/mac/art-blueprint.png'),
+  'art-glass': require('../../assets/app-icons/mac/art-glass.png'),
+  'art-synth': require('../../assets/app-icons/mac/art-synth.png'),
+}

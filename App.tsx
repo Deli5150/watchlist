@@ -13,6 +13,7 @@ import { useStore } from './src/lib/store'
 import { startSync, syncNow } from './src/lib/syncRunner'
 import { scheduleAlerts } from './src/lib/upcoming'
 import { autoCheck, startUpdater, useUpdate } from './src/lib/updater'
+import { startAppIcon } from './src/lib/appIcon'
 import type { RootParams } from './src/nav'
 import Calendar from './src/screens/Calendar'
 import Discover, { Browse } from './src/screens/Discover'
@@ -20,7 +21,7 @@ import History from './src/screens/History'
 import Library, { LibraryList } from './src/screens/Library'
 import Movies from './src/screens/Movies'
 import Shows from './src/screens/Shows'
-import { AboutScreen, AppearanceScreen, DataScreen, FeedbackScreen, LanguageScreen, RegionScreen, SyncScreen, UpdatesScreen, WhatsNew } from './src/screens/more'
+import { AboutScreen, AppearanceScreen, AppIconScreen, DataScreen, FeedbackScreen, LanguageScreen, RegionScreen, SyncScreen, UpdatesScreen, WhatsNew } from './src/screens/more'
 import Person, { Collection } from './src/screens/Person'
 import Search from './src/screens/Search'
 import { Scorecard } from './src/screens/Season'
@@ -146,6 +147,7 @@ export default function App() {
   useEffect(() => {
     void useStore.getState().hydrate()
     startUpdater()
+    startAppIcon()
   }, [])
 
   useEffect(() => {
@@ -186,6 +188,7 @@ export default function App() {
               <Root.Screen name="Collection" component={Collection} />
               <Root.Screen name="Browse" component={Browse} />
               <Root.Screen name="Appearance" component={AppearanceScreen} />
+              <Root.Screen name="AppIcon" component={AppIconScreen} />
               <Root.Screen name="Region" component={RegionScreen} />
               <Root.Screen name="Language" component={LanguageScreen} />
               <Root.Screen name="Data" component={DataScreen} />
